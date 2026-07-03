@@ -1,0 +1,1603 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Miner & Blacksmith</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #101417;
+      --panel: #171d22;
+      --panel-2: #20272d;
+      --text: #eff5f1;
+      --muted: #9eaaa5;
+      --line: #344047;
+      --green: #72d58b;
+      --gold: #f4c95d;
+      --red: #f27474;
+      --blue: #65b7ff;
+      --violet: #b98cff;
+      --shadow: rgba(0, 0, 0, .35);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background:
+        radial-gradient(circle at 20% 0%, rgba(116, 173, 127, .13), transparent 34rem),
+        linear-gradient(135deg, #11181a 0%, #141414 46%, #1d1812 100%);
+      color: var(--text);
+    }
+
+    button, select {
+      font: inherit;
+      color: inherit;
+    }
+
+    .app {
+      width: min(1280px, 100%);
+      margin: 0 auto;
+      padding: 18px;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.7rem, 4vw, 3rem);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: .95rem;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-2);
+      padding: 10px 12px;
+      cursor: pointer;
+      box-shadow: 0 10px 28px var(--shadow);
+      transition: transform .14s ease, background .14s ease, border-color .14s ease;
+      min-height: 42px;
+    }
+
+    .btn:hover { transform: translateY(-1px); border-color: #65737b; }
+    .btn:active { transform: translateY(0); }
+    .btn.primary { background: #2d6b48; border-color: #59a873; }
+    .btn.hot { background: #77402b; border-color: #c77d4b; }
+    .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(290px, 1.05fr) minmax(320px, 1.25fr) minmax(280px, .95fr);
+      gap: 14px;
+      align-items: start;
+    }
+
+    .panel {
+      background: rgba(23, 29, 34, .94);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 18px 50px var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 14px 15px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, .025);
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 1.02rem;
+      letter-spacing: 0;
+    }
+
+    .body { padding: 14px; }
+
+    .mine-scene {
+      position: relative;
+      height: 230px;
+      border: 1px solid #2c373d;
+      border-radius: 8px;
+      overflow: hidden;
+      background:
+        linear-gradient(180deg, rgba(40, 54, 56, .2), rgba(10, 12, 13, .25)),
+        repeating-linear-gradient(145deg, #262d2e 0 24px, #202627 24px 48px);
+    }
+
+    .shaft {
+      position: absolute;
+      left: 7%;
+      right: 7%;
+      bottom: 0;
+      height: 60%;
+      background:
+        radial-gradient(circle at 25% 45%, #d6d0b3 0 3px, transparent 4px),
+        radial-gradient(circle at 73% 30%, #8fc1d8 0 2px, transparent 3px),
+        linear-gradient(90deg, #1b1d1c, #272120 25%, #33251d 52%, #171716);
+      clip-path: polygon(8% 0, 92% 0, 100% 100%, 0 100%);
+    }
+
+    .ore-face {
+      position: absolute;
+      right: 13%;
+      bottom: 33px;
+      width: 126px;
+      height: 122px;
+      border: 1px solid rgba(255,255,255,.12);
+      background:
+        radial-gradient(circle at 34% 34%, rgba(111, 215, 255, .8) 0 5px, transparent 7px),
+        radial-gradient(circle at 68% 50%, rgba(244, 201, 93, .85) 0 4px, transparent 6px),
+        radial-gradient(circle at 54% 72%, rgba(184, 140, 255, .78) 0 3px, transparent 5px),
+        linear-gradient(135deg, #4d5457, #252c2f 52%, #15191b);
+      clip-path: polygon(17% 7%, 83% 0, 100% 31%, 89% 86%, 45% 100%, 9% 83%, 0 30%);
+      box-shadow: inset -18px -20px 28px rgba(0,0,0,.45), 0 18px 28px rgba(0,0,0,.35);
+      transform-origin: 48% 72%;
+    }
+
+    .mine-scene.hit .ore-face {
+      animation: rock-hit .72s ease;
+    }
+
+    .mine-scene.hit {
+      animation: scene-jolt .72s ease;
+    }
+
+    .miner {
+      position: absolute;
+      left: 23%;
+      bottom: 22px;
+      width: 84px;
+      height: 69px;
+      transform-origin: 50% 100%;
+    }
+
+    .miner .prep-pose,
+    .miner .strike-pose {
+      transform-box: view-box;
+      transform-origin: 61px 116px;
+    }
+
+    .miner .strike-pose {
+      opacity: 0;
+    }
+
+    .miner.mining .prep-pose {
+      animation: uo-prep-frame .78s steps(1, end);
+    }
+
+    .miner.mining .strike-pose {
+      animation: uo-strike-frame .78s steps(1, end);
+    }
+
+    .miner.mining .pickaxe-head {
+      animation: pick-flash .72s ease;
+    }
+
+    .miner.mining .swing-arc {
+      animation: swing-arc .72s ease-out;
+    }
+
+    .miner .pickaxe-handle {
+      filter: drop-shadow(0 3px 2px rgba(0,0,0,.38));
+    }
+
+    .miner .pickaxe-metal {
+      filter: drop-shadow(0 4px 3px rgba(0,0,0,.55));
+    }
+
+    @keyframes uo-prep-frame {
+      0%, 36%, 100% { opacity: 1; transform: translate(0, 0); }
+      37%, 68% { opacity: 0; transform: translate(0, 0); }
+    }
+
+    @keyframes uo-strike-frame {
+      0%, 36%, 69%, 100% { opacity: 0; transform: translate(0, 0); }
+      37%, 68% { opacity: 1; transform: translate(2px, 2px); }
+    }
+
+    @keyframes pick-flash {
+      0%, 45%, 100% { filter: none; }
+      54% { filter: drop-shadow(0 0 12px rgba(244, 201, 93, .95)); }
+    }
+
+    @keyframes rock-hit {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      50% { transform: translate(8px, 4px) rotate(2.4deg) scale(.98); }
+      58% { transform: translate(-7px, -2px) rotate(-1.8deg) scale(1.02); }
+      72% { transform: translate(3px, 1px) rotate(.9deg); }
+    }
+
+    @keyframes scene-jolt {
+      0%, 46%, 100% { transform: translate(0, 0); }
+      51% { transform: translate(2px, 0); }
+      56% { transform: translate(-2px, 1px); }
+      63% { transform: translate(1px, -1px); }
+    }
+
+    @keyframes swing-arc {
+      0%, 17% { opacity: 0; stroke-dashoffset: 92; transform: rotate(-20deg); }
+      36% { opacity: .85; stroke-dashoffset: 48; }
+      58% { opacity: .12; stroke-dashoffset: 0; transform: rotate(14deg); }
+      100% { opacity: 0; stroke-dashoffset: 0; transform: rotate(14deg); }
+    }
+
+    .spark {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--gold);
+      right: 21%;
+      bottom: 100px;
+      opacity: 0;
+      pointer-events: none;
+      box-shadow: 0 0 18px var(--gold), 0 0 4px #fff;
+    }
+
+    .spark.show { animation: spark .72s ease-out; }
+    @keyframes spark {
+      0%, 43% { opacity: 0; transform: translate(0, 0) scale(.35); }
+      54% { opacity: 1; transform: translate(0, 0) scale(1.6); }
+      100% { opacity: 0; transform: translate(44px, -38px) scale(2.8); }
+    }
+
+    .impact-ring {
+      position: absolute;
+      right: 18.5%;
+      bottom: 93px;
+      width: 46px;
+      height: 46px;
+      border: 3px solid rgba(244, 201, 93, .9);
+      border-radius: 50%;
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(.2);
+      box-shadow: 0 0 18px rgba(244, 201, 93, .5);
+    }
+
+    .impact-ring.show {
+      animation: impact-ring .72s ease-out;
+    }
+
+    @keyframes impact-ring {
+      0%, 47% { opacity: 0; transform: scale(.2); }
+      54% { opacity: .95; transform: scale(.55); }
+      100% { opacity: 0; transform: scale(1.8); }
+    }
+
+    .debris {
+      position: absolute;
+      right: 22%;
+      bottom: 104px;
+      width: 1px;
+      height: 1px;
+      pointer-events: none;
+    }
+
+    .chip {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+      background: #aeb9bd;
+      opacity: 0;
+    }
+
+    .chip:nth-child(2) { background: #f4c95d; }
+    .chip:nth-child(3) { background: #6fd7ff; }
+    .chip:nth-child(4) { background: #777f82; }
+
+    .debris.show .chip:nth-child(1) { animation: chip-one .72s ease-out; }
+    .debris.show .chip:nth-child(2) { animation: chip-two .72s ease-out; }
+    .debris.show .chip:nth-child(3) { animation: chip-three .72s ease-out; }
+    .debris.show .chip:nth-child(4) { animation: chip-four .72s ease-out; }
+
+    @keyframes chip-one {
+      0%, 47% { opacity: 0; }
+      55% { opacity: 1; }
+      100% { opacity: 0; transform: translate(-56px, -38px) rotate(190deg); }
+    }
+
+    @keyframes chip-two {
+      0%, 47% { opacity: 0; }
+      55% { opacity: 1; }
+      100% { opacity: 0; transform: translate(36px, -58px) rotate(230deg); }
+    }
+
+    @keyframes chip-three {
+      0%, 47% { opacity: 0; }
+      55% { opacity: 1; }
+      100% { opacity: 0; transform: translate(-22px, 44px) rotate(170deg); }
+    }
+
+    @keyframes chip-four {
+      0%, 47% { opacity: 0; }
+      55% { opacity: 1; }
+      100% { opacity: 0; transform: translate(62px, 22px) rotate(210deg); }
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 9px;
+      margin-top: 12px;
+    }
+
+    .stat {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: var(--panel-2);
+      min-height: 68px;
+    }
+
+    .label {
+      color: var(--muted);
+      font-size: .78rem;
+      margin-bottom: 4px;
+    }
+
+    .value {
+      font-weight: 700;
+      font-size: 1.15rem;
+    }
+
+    .bar {
+      height: 8px;
+      background: #0d1114;
+      border: 1px solid #293238;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--green), var(--gold));
+      transition: width .25s ease;
+    }
+
+    .action-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 9px;
+      margin-top: 12px;
+    }
+
+    .dungeon-card {
+      margin-top: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.015)),
+        var(--panel-2);
+      overflow: hidden;
+    }
+
+    .dungeon-head {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 11px 12px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+
+    .dungeon-name {
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    .dungeon-grid {
+      display: grid;
+      grid-template-columns: 90px 1fr;
+      gap: 12px;
+      padding: 12px;
+      align-items: center;
+    }
+
+    .mini-map {
+      display: grid;
+      grid-template-columns: repeat(3, 24px);
+      grid-template-rows: repeat(3, 24px);
+      gap: 4px;
+      justify-content: center;
+    }
+
+    .map-cell {
+      border: 1px solid #3f4a50;
+      border-radius: 4px;
+      background: #11171a;
+      box-shadow: inset 0 0 10px rgba(0,0,0,.35);
+    }
+
+    .map-cell.visited { background: #263139; }
+    .map-cell.current {
+      background: #315b42;
+      border-color: #72d58b;
+      box-shadow: 0 0 0 2px rgba(114, 213, 139, .16), inset 0 0 12px rgba(114,213,139,.25);
+    }
+
+    .dungeon-meta {
+      display: grid;
+      gap: 7px;
+      color: var(--muted);
+      font-size: .88rem;
+    }
+
+    .vein-meter {
+      height: 9px;
+      border-radius: 999px;
+      border: 1px solid #334047;
+      background: #0d1114;
+      overflow: hidden;
+    }
+
+    .vein-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #777f82, #f4c95d, #6fd7ff);
+      transition: width .2s ease;
+    }
+
+    .travel-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      padding: 0 12px 12px;
+    }
+
+    .travel-grid .wide {
+      grid-column: span 3;
+    }
+
+    .forge {
+      min-height: 230px;
+      border: 1px solid #3b342d;
+      border-radius: 8px;
+      background:
+        radial-gradient(circle at 50% 72%, rgba(255, 139, 60, .55), transparent 36%),
+        linear-gradient(180deg, #22282b, #171310 75%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .anvil {
+      position: absolute;
+      left: 50%;
+      bottom: 50px;
+      width: 150px;
+      height: 54px;
+      transform: translateX(-50%);
+      background: linear-gradient(180deg, #889398, #3d474d);
+      clip-path: polygon(10% 23%, 61% 23%, 75% 0, 100% 13%, 80% 38%, 66% 38%, 61% 100%, 31% 100%, 25% 38%, 0 38%);
+      filter: drop-shadow(0 16px 18px rgba(0,0,0,.45));
+    }
+
+    .forge-hammer {
+      position: absolute;
+      left: 50%;
+      bottom: 91px;
+      width: 118px;
+      height: 102px;
+      transform: translateX(-50%);
+      transform-origin: 36px 22px;
+      filter: drop-shadow(0 12px 12px rgba(0,0,0,.38));
+    }
+
+    .forge.striking .forge-hammer {
+      animation: hammer-strike .72s steps(2, end);
+    }
+
+    .forge.striking .anvil {
+      animation: anvil-hit .72s ease;
+    }
+
+    .forge-spark, .forge-ring {
+      position: absolute;
+      left: 56%;
+      bottom: 86px;
+      pointer-events: none;
+      opacity: 0;
+    }
+
+    .forge-ring {
+      width: 20px;
+      height: 10px;
+      border: 2px solid rgba(255, 221, 99, .75);
+      border-radius: 50%;
+      transform: translate(-50%, 0);
+    }
+
+    .forge.striking .forge-ring {
+      animation: forge-ring .72s ease-out;
+    }
+
+    .forge-spark span {
+      position: absolute;
+      width: 7px;
+      height: 7px;
+      border-radius: 2px;
+      background: #ffd76a;
+      box-shadow: 0 0 10px rgba(255, 177, 71, .9);
+      opacity: 0;
+    }
+
+    .forge-spark span:nth-child(2) { background: #ff8f45; }
+    .forge-spark span:nth-child(3) { background: #fff1a8; }
+    .forge-spark span:nth-child(4) { background: #ff5e45; }
+
+    .forge.striking .forge-spark span:nth-child(1) { animation: forge-chip-one .72s ease-out; }
+    .forge.striking .forge-spark span:nth-child(2) { animation: forge-chip-two .72s ease-out; }
+    .forge.striking .forge-spark span:nth-child(3) { animation: forge-chip-three .72s ease-out; }
+    .forge.striking .forge-spark span:nth-child(4) { animation: forge-chip-four .72s ease-out; }
+
+    .flame {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      height: 95px;
+      background:
+        radial-gradient(ellipse at 35% 100%, rgba(255, 221, 99, .8), transparent 35%),
+        radial-gradient(ellipse at 60% 100%, rgba(255, 100, 48, .8), transparent 42%);
+      opacity: .85;
+      animation: flame 1.4s infinite alternate ease-in-out;
+    }
+
+    @keyframes flame {
+      from { transform: scaleY(.9); opacity: .7; }
+      to { transform: scaleY(1.08); opacity: .95; }
+    }
+
+    @keyframes hammer-strike {
+      0%, 35%, 100% { transform: translateX(-50%) rotate(-28deg) translate(-10px, -14px); }
+      36%, 68% { transform: translateX(-50%) rotate(9deg) translate(4px, 10px); }
+      69%, 82% { transform: translateX(-50%) rotate(-10deg) translate(-3px, -3px); }
+    }
+
+    @keyframes anvil-hit {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      45% { transform: translateX(-50%) translateY(4px) scaleY(.96); }
+      62% { transform: translateX(-50%) translateY(-1px); }
+    }
+
+    @keyframes forge-ring {
+      0%, 35% { opacity: 0; transform: translate(-50%, 0) scale(.5); }
+      45% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -3px) scale(2.8); }
+    }
+
+    @keyframes forge-chip-one {
+      0%, 38% { opacity: 0; transform: translate(0, 0); }
+      48% { opacity: 1; }
+      100% { opacity: 0; transform: translate(-48px, -42px) rotate(170deg); }
+    }
+
+    @keyframes forge-chip-two {
+      0%, 38% { opacity: 0; transform: translate(0, 0); }
+      48% { opacity: 1; }
+      100% { opacity: 0; transform: translate(42px, -34px) rotate(210deg); }
+    }
+
+    @keyframes forge-chip-three {
+      0%, 38% { opacity: 0; transform: translate(0, 0); }
+      48% { opacity: 1; }
+      100% { opacity: 0; transform: translate(-18px, -62px) rotate(250deg); }
+    }
+
+    @keyframes forge-chip-four {
+      0%, 38% { opacity: 0; transform: translate(0, 0); }
+      48% { opacity: 1; }
+      100% { opacity: 0; transform: translate(58px, -6px) rotate(145deg); }
+    }
+
+    .recipe-row, .ore-row, .log-row {
+      display: grid;
+      gap: 9px;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,.075);
+    }
+
+    .recipe-row {
+      grid-template-columns: 1fr auto;
+    }
+
+    .ore-row {
+      grid-template-columns: auto 1fr auto;
+    }
+
+    .ore-chip {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 1.1rem;
+      border: 1px solid rgba(255,255,255,.22);
+      box-shadow: inset 0 0 12px rgba(255,255,255,.15);
+    }
+
+    .name {
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: .82rem;
+      line-height: 1.35;
+      margin-top: 3px;
+    }
+
+    .count {
+      font-variant-numeric: tabular-nums;
+      min-width: 3ch;
+      text-align: right;
+      font-weight: 700;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 7px;
+      padding: 10px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(0,0,0,.13);
+    }
+
+    .tab {
+      flex: 1;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #151b1f;
+      padding: 8px;
+      cursor: pointer;
+    }
+
+    .tab.active {
+      border-color: var(--green);
+      background: #203426;
+    }
+
+    .hidden { display: none; }
+
+    .log {
+      height: 245px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .log-row {
+      grid-template-columns: 1fr;
+      color: #d9e2dc;
+      font-size: .9rem;
+    }
+
+    .rare { color: var(--violet); }
+    .success { color: var(--green); }
+    .fail { color: var(--red); }
+    .gold { color: var(--gold); }
+
+    .select-line {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 9px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    select {
+      width: 100%;
+      min-height: 42px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #11171b;
+      padding: 9px;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%) translateY(20px);
+      opacity: 0;
+      pointer-events: none;
+      background: #edf8f1;
+      color: #101514;
+      padding: 11px 14px;
+      border-radius: 8px;
+      box-shadow: 0 12px 34px rgba(0,0,0,.35);
+      transition: opacity .25s ease, transform .25s ease;
+      max-width: min(520px, calc(100vw - 28px));
+      text-align: center;
+      font-weight: 700;
+      z-index: 10;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+      .topbar { grid-template-columns: 1fr; }
+      .controls { justify-content: stretch; }
+      .controls .btn { flex: 1; }
+    }
+
+    @media (max-width: 560px) {
+      .app { padding: 12px; }
+      .stats, .action-grid { grid-template-columns: 1fr; }
+      .mine-scene, .forge { height: 205px; }
+      .recipe-row { grid-template-columns: 1fr; }
+      .recipe-row .btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="topbar">
+      <div>
+        <h1>Miner & Blacksmith</h1>
+        <div class="subtitle">희귀 금속을 캐고, 제련하고, 장비를 만들어 더 깊은 광산으로 내려가세요.</div>
+      </div>
+      <div class="controls">
+        <button class="btn" id="saveBtn" title="현재 진행 저장">저장</button>
+        <button class="btn" id="resetBtn" title="처음부터 다시 시작">초기화</button>
+      </div>
+    </section>
+
+    <section class="layout">
+      <article class="panel">
+        <header>
+          <h2>채광</h2>
+          <span class="hint" id="mineChance">희귀 확률 계산 중</span>
+        </header>
+        <div class="body">
+          <div class="mine-scene">
+            <div class="shaft"></div>
+            <div class="ore-face" aria-hidden="true"></div>
+            <svg class="miner" id="minerSvg" viewBox="0 0 168 138" aria-hidden="true">
+              <ellipse cx="59" cy="125" rx="41" ry="9" fill="rgba(0,0,0,.35)"/>
+              <g class="prep-pose">
+                <g class="miner-body">
+                  <path d="M39 35 L61 22 L84 35 L80 48 L43 48 Z" fill="#d7aa47"/>
+                  <path d="M43 49 C46 39 76 39 80 50 L82 86 C78 99 47 99 42 87 Z" fill="#4f8d62"/>
+                  <circle cx="62" cy="37" r="13" fill="#c59061"/>
+                  <path d="M49 33 C54 20 79 22 82 35 C71 31 59 30 49 33 Z" fill="#e0b74f"/>
+                  <path d="M48 89 L34 123" stroke="#59636b" stroke-width="11" stroke-linecap="round" fill="none"/>
+                  <path d="M74 89 L91 123" stroke="#59636b" stroke-width="11" stroke-linecap="round" fill="none"/>
+                </g>
+                <path d="M45 56 C59 49 80 47 96 48" stroke="#b98258" stroke-width="10" stroke-linecap="round" fill="none"/>
+                <path d="M78 56 C88 50 98 51 103 58" stroke="#c59061" stroke-width="10" stroke-linecap="round" fill="none"/>
+                <g class="pickaxe-tool">
+                  <path d="M101 58 L101 1" stroke="#5f4634" stroke-width="13" stroke-linecap="round" fill="none"/>
+                  <path d="M101 57 L101 3" stroke="#8a6b4b" stroke-width="9.5" stroke-linecap="round" fill="none" class="pickaxe-handle"/>
+                  <g class="pickaxe-head pickaxe-metal">
+                    <path d="M86 1 C72 -6 56 -3 47 6 C63 5 78 11 94 22 Z" fill="#15191b"/>
+                    <path d="M108 1 C123 -7 140 -4 150 5 C132 5 119 11 105 22 Z" fill="#1f2428"/>
+                    <ellipse cx="101" cy="14" rx="10" ry="13" fill="#2b2b29"/>
+                  </g>
+                </g>
+                <circle cx="96" cy="48" r="5.8" fill="#c59061"/>
+                <circle cx="103" cy="58" r="5.8" fill="#c59061"/>
+              </g>
+              <g class="strike-pose">
+                <g class="miner-body">
+                  <path d="M48 38 L70 28 L89 43 L80 55 L51 52 Z" fill="#d7aa47"/>
+                  <path d="M50 54 C61 45 86 51 94 66 L82 90 C70 98 45 84 40 72 Z" fill="#4f8d62"/>
+                  <circle cx="79" cy="41" r="12" fill="#c59061"/>
+                  <path d="M67 36 C74 24 95 27 98 40 C88 37 78 35 67 36 Z" fill="#e0b74f"/>
+                  <path d="M47 82 L31 101 L17 123" stroke="#59636b" stroke-width="11" stroke-linecap="round" fill="none"/>
+                  <path d="M78 88 L99 103 L116 122" stroke="#59636b" stroke-width="11" stroke-linecap="round" fill="none"/>
+                </g>
+                <path d="M60 62 C76 66 91 72 103 80" stroke="#b98258" stroke-width="10" stroke-linecap="round" fill="none"/>
+                <path d="M83 65 C94 69 104 75 112 86" stroke="#c59061" stroke-width="10" stroke-linecap="round" fill="none"/>
+                <path class="swing-arc" d="M86 20 C121 9 158 35 164 79" stroke="#fff7bf" stroke-width="5" stroke-linecap="round" fill="none" opacity="0" stroke-dasharray="96" stroke-dashoffset="96"/>
+                <g class="pickaxe-tool">
+                  <path d="M101 79 L145 120" stroke="#5f4634" stroke-width="13" stroke-linecap="round" fill="none"/>
+                  <path d="M103 79 L147 121" stroke="#8a6b4b" stroke-width="9.5" stroke-linecap="round" fill="none" class="pickaxe-handle"/>
+                  <g class="pickaxe-head pickaxe-metal">
+                    <path d="M128 124 C138 111 154 101 166 98 C157 111 151 120 146 133 Z" fill="#15191b"/>
+                    <path d="M146 133 C129 131 111 126 94 118 C111 115 130 116 146 123 Z" fill="#1f2428"/>
+                    <ellipse cx="146" cy="121" rx="9" ry="11" transform="rotate(42 146 121)" fill="#2b2b29"/>
+                  </g>
+                </g>
+                <circle cx="103" cy="80" r="5.8" fill="#c59061"/>
+                <circle cx="112" cy="86" r="5.8" fill="#c59061"/>
+              </g>
+            </svg>
+            <div class="spark" id="spark"></div>
+            <div class="impact-ring" id="impactRing" aria-hidden="true"></div>
+            <div class="debris" id="debris" aria-hidden="true">
+              <span class="chip"></span>
+              <span class="chip"></span>
+              <span class="chip"></span>
+              <span class="chip"></span>
+            </div>
+          </div>
+
+          <div class="dungeon-card">
+            <div class="dungeon-head">
+              <div>
+                <div class="label">던전 탐험</div>
+                <div class="dungeon-name" id="roomName">광산 입구</div>
+              </div>
+              <div class="value" id="dungeonDepth">1층</div>
+            </div>
+            <div class="dungeon-grid">
+              <div class="mini-map" id="miniMap" aria-hidden="true"></div>
+              <div class="dungeon-meta">
+                <div id="roomDesc">낡은 광산 입구입니다. 안쪽에서 광맥이 희미하게 빛납니다.</div>
+                <div>위험도 <span id="dangerLevel">0</span> · 광맥 <span id="veinText">2/2</span></div>
+                <div class="vein-meter"><div class="vein-fill" id="veinFill"></div></div>
+              </div>
+            </div>
+            <div class="travel-grid">
+              <button class="btn" id="northBtn">북쪽</button>
+              <button class="btn" id="deeperBtn">깊은 길</button>
+              <button class="btn" id="eastBtn">동쪽</button>
+              <button class="btn" id="westBtn">서쪽</button>
+              <button class="btn" id="campBtn">대장간 귀환</button>
+              <button class="btn" id="southBtn">남쪽</button>
+            </div>
+          </div>
+
+          <div class="stats">
+            <div class="stat">
+              <div class="label">광부 레벨</div>
+              <div class="value" id="minerLevel">1</div>
+              <div class="bar"><div class="fill" id="minerXp"></div></div>
+            </div>
+            <div class="stat">
+              <div class="label">채광력</div>
+              <div class="value" id="power">1</div>
+              <div class="hint">곡괭이와 장비로 증가</div>
+            </div>
+            <div class="stat">
+              <div class="label">골드</div>
+              <div class="value gold" id="gold">0</div>
+              <div class="hint">광석 판매와 제작 보상</div>
+            </div>
+            <div class="stat">
+              <div class="label">깊이</div>
+              <div class="value" id="depth">1층</div>
+              <div class="hint">레벨이 오르면 자동 상승</div>
+            </div>
+          </div>
+
+          <div class="action-grid">
+            <button class="btn primary" id="mineBtn">⛏ 채광</button>
+            <button class="btn" id="bulkMineBtn">⛏⛏ 10회 채광</button>
+            <button class="btn" id="sellBtn">광석 판매</button>
+            <button class="btn" id="shopOpenBtn">상점 열기</button>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel">
+        <header>
+          <h2>대장간</h2>
+          <span class="hint" id="forgeChance">성공률 계산 중</span>
+        </header>
+        <div class="body">
+          <div class="forge">
+            <div class="flame"></div>
+            <svg class="forge-hammer" id="forgeHammer" viewBox="0 0 118 102" aria-hidden="true">
+              <path d="M28 16 L86 76" stroke="#5f4634" stroke-width="16" stroke-linecap="round"/>
+              <path d="M30 15 L88 74" stroke="#9a7149" stroke-width="10" stroke-linecap="round"/>
+              <path d="M73 64 L98 56 L111 70 L86 83 Z" fill="#9aa4a9"/>
+              <path d="M97 56 L116 62 L118 75 L108 72 Z" fill="#c1c9cd"/>
+              <path d="M75 65 L88 83 L73 90 L60 72 Z" fill="#59636b"/>
+            </svg>
+            <div class="anvil"></div>
+            <div class="forge-ring" aria-hidden="true"></div>
+            <div class="forge-spark" aria-hidden="true">
+              <span></span>
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          </div>
+
+          <div class="stats">
+            <div class="stat">
+              <div class="label">대장장이 레벨</div>
+              <div class="value" id="smithLevel">1</div>
+              <div class="bar"><div class="fill" id="smithXp"></div></div>
+            </div>
+            <div class="stat">
+              <div class="label">숙련도</div>
+              <div class="value" id="mastery">0</div>
+              <div class="hint">실패해도 조금 오른다</div>
+            </div>
+          </div>
+
+          <div class="select-line">
+            <select id="recipeSelect" aria-label="제작 선택"></select>
+            <button class="btn hot" id="craftBtn">제작</button>
+          </div>
+          <div id="recipeList"></div>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="tabs">
+          <button class="tab active" data-tab="inventory">인벤토리</button>
+          <button class="tab" data-tab="shop">상점</button>
+          <button class="tab" data-tab="log">기록</button>
+        </div>
+        <div class="body" id="inventoryTab">
+          <div id="inventory"></div>
+        </div>
+        <div class="body hidden" id="shopTab">
+          <div id="shopList"></div>
+        </div>
+        <div class="body hidden" id="logTab">
+          <div class="log" id="log"></div>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const ores = [
+      { id: "stone", name: "돌", icon: "◆", color: "#777f82", tier: 1, value: 1, base: 52 },
+      { id: "copper", name: "구리", icon: "●", color: "#c67b44", tier: 1, value: 3, base: 28 },
+      { id: "iron", name: "철", icon: "⬣", color: "#b8c3c8", tier: 2, value: 7, base: 13 },
+      { id: "silver", name: "은", icon: "✦", color: "#dce8ef", tier: 3, value: 18, base: 4.6 },
+      { id: "mithril", name: "미스릴", icon: "✧", color: "#6fd7ff", tier: 4, value: 55, base: 1.6 },
+      { id: "adamant", name: "아다만트", icon: "✹", color: "#a68cff", tier: 5, value: 140, base: .55 },
+      { id: "orichalcum", name: "오리하르콘", icon: "✺", color: "#ffcf61", tier: 6, value: 360, base: .16 },
+      { id: "starsteel", name: "성철", icon: "✷", color: "#f47eff", tier: 7, value: 900, base: .045 }
+    ];
+
+    const recipes = [
+      { id: "copperIngot", name: "구리 주괴", level: 1, xp: 8, mastery: 2, gold: 4, needs: { copper: 3, stone: 1 }, unlock: "초급 제작" },
+      { id: "ironPick", name: "철 곡괭이", level: 2, xp: 18, mastery: 5, gold: 16, needs: { iron: 5, copper: 3 }, power: 1, unlock: "채광력 +1" },
+      { id: "silverCharm", name: "은 부적", level: 3, xp: 34, mastery: 10, gold: 35, needs: { silver: 4, iron: 4 }, rareBoost: .08, unlock: "희귀 금속 확률 상승" },
+      { id: "mithrilHammer", name: "미스릴 망치", level: 5, xp: 70, mastery: 18, gold: 90, needs: { mithril: 3, silver: 5, iron: 8 }, forgeBoost: .08, unlock: "제작 성공률 상승" },
+      { id: "adamantDrill", name: "아다만트 드릴", level: 7, xp: 125, mastery: 32, gold: 210, needs: { adamant: 2, mithril: 5, iron: 15 }, power: 3, unlock: "채광력 +3" },
+      { id: "orichalcumCrown", name: "오리하르콘 왕관", level: 10, xp: 220, mastery: 55, gold: 620, needs: { orichalcum: 2, adamant: 3, silver: 12 }, rareBoost: .15, unlock: "희귀 금속 확률 크게 상승" },
+      { id: "starsteelCore", name: "성철 코어", level: 14, xp: 420, mastery: 90, gold: 1600, needs: { starsteel: 1, orichalcum: 2, mithril: 10 }, power: 6, forgeBoost: .12, unlock: "최종 장비" }
+    ];
+
+    const shopItems = [
+      { id: "sturdyPick", name: "튼튼한 곡괭이", cost: 90, power: 1, rareBoost: 0, desc: "기본 채광력을 올려 초반 탐험이 빨라집니다." },
+      { id: "ironPickShop", name: "철제 광부 곡괭이", cost: 240, power: 2, rareBoost: .02, desc: "깊은 길에서 광맥을 더 안정적으로 캡니다." },
+      { id: "prospectorPick", name: "탐광꾼 곡괭이", cost: 520, power: 3, rareBoost: .06, desc: "희귀 금속을 찾는 감각이 좋아집니다." },
+      { id: "mithrilPick", name: "미스릴 곡괭이", cost: 1200, power: 5, rareBoost: .12, desc: "푸른 광맥과 심층 광맥에 강합니다." },
+      { id: "orichalcumPick", name: "오리하르콘 곡괭이", cost: 2800, power: 8, rareBoost: .22, desc: "던전 깊은 곳의 특수 금속을 노립니다." }
+    ];
+
+    const roomTypes = [
+      { name: "광산 입구", desc: "대장간과 이어진 안전한 갱도입니다.", vein: 2, danger: 0, depth: 0 },
+      { name: "구리빛 갈림길", desc: "벽면에 구리 광맥이 길게 이어져 있습니다.", vein: 3, danger: 1, depth: 0 },
+      { name: "젖은 석회 동굴", desc: "발밑이 미끄럽지만 광석 흔적이 많습니다.", vein: 3, danger: 2, depth: 1 },
+      { name: "버려진 광부 야영지", desc: "오래된 도구와 꺼진 화로가 남아 있습니다.", vein: 2, danger: 1, depth: 1 },
+      { name: "푸른 수정 광맥", desc: "미스릴 기운이 희미하게 새어 나옵니다.", vein: 4, danger: 3, depth: 2 },
+      { name: "무너진 채굴장", desc: "낙석 위험이 있지만 깊은 광물이 드러나 있습니다.", vein: 5, danger: 4, depth: 3 },
+      { name: "고대 용광로 터", desc: "대장장이들이 남긴 열기가 아직 벽에 남아 있습니다.", vein: 4, danger: 3, depth: 3 },
+      { name: "별빛 심층 광맥", desc: "아주 희귀한 금속이 나올 수 있는 깊은 방입니다.", vein: 6, danger: 5, depth: 5 }
+    ];
+
+    const defaultDungeon = {
+      x: 0,
+      y: 0,
+      depth: 1,
+      room: "광산 입구",
+      desc: "대장간과 이어진 안전한 갱도입니다.",
+      danger: 0,
+      vein: 2,
+      maxVein: 2,
+      visited: { "0,0": true }
+    };
+
+    const defaultState = {
+      minerLevel: 1,
+      minerXp: 0,
+      smithLevel: 1,
+      smithXp: 0,
+      mastery: 0,
+      gold: 0,
+      power: 1,
+      rareBoost: 0,
+      forgeBoost: 0,
+      dungeon: JSON.parse(JSON.stringify(defaultDungeon)),
+      shop: { owned: {} },
+      crafted: {},
+      inv: Object.fromEntries(ores.map(ore => [ore.id, 0])),
+      log: ["광산 입구에 도착했습니다. 첫 곡괭이를 들어보세요."]
+    };
+
+    let state = load();
+
+    const $ = id => document.getElementById(id);
+    const format = number => Math.floor(number).toLocaleString("ko-KR");
+
+    function xpNeed(level) {
+      return Math.floor(35 + level * level * 17);
+    }
+
+    function cloneDefault() {
+      return JSON.parse(JSON.stringify(defaultState));
+    }
+
+    function load() {
+      try {
+        const saved = JSON.parse(localStorage.getItem("minerBlacksmithSave"));
+        const base = cloneDefault();
+        return {
+          ...base,
+          ...saved,
+          inv: { ...base.inv, ...(saved?.inv || {}) },
+          dungeon: { ...base.dungeon, ...(saved?.dungeon || {}), visited: { ...base.dungeon.visited, ...(saved?.dungeon?.visited || {}) } },
+          shop: { ...base.shop, ...(saved?.shop || {}), owned: { ...base.shop.owned, ...(saved?.shop?.owned || {}) } },
+          crafted: saved?.crafted || {},
+          log: saved?.log || base.log
+        };
+      } catch {
+        return cloneDefault();
+      }
+    }
+
+    function save(show = true) {
+      localStorage.setItem("minerBlacksmithSave", JSON.stringify(state));
+      if (show) toast("저장되었습니다.");
+    }
+
+    function reset() {
+      if (!confirm("진행 상황을 모두 지울까요?")) return;
+      state = cloneDefault();
+      localStorage.removeItem("minerBlacksmithSave");
+      render();
+      toast("새 게임을 시작합니다.");
+    }
+
+    function dungeonDepth() {
+      return Math.floor(state.minerLevel / 2) + state.power + Math.max(0, state.dungeon.depth - 1);
+    }
+
+    function weightedOre() {
+      const depth = dungeonDepth();
+      const weights = ores.map(ore => {
+        const tierPenalty = Math.max(0, ore.tier - 1);
+        const levelBoost = 1 + (state.minerLevel - 1) * (0.16 + tierPenalty * 0.035);
+        const depthBoost = 1 + Math.max(0, depth - ore.tier) * 0.11;
+        const dungeonBoost = 1 + Math.max(0, state.dungeon.danger) * (ore.tier >= 4 ? 0.09 : 0.025);
+        const rareBonus = ore.tier >= 4 ? 1 + state.rareBoost + state.minerLevel * 0.018 : 1;
+        const lockedPenalty = state.minerLevel + state.power < ore.tier ? 0.08 : 1;
+        return Math.max(0.001, ore.base * levelBoost * depthBoost * dungeonBoost * rareBonus * lockedPenalty);
+      });
+      const total = weights.reduce((sum, weight) => sum + weight, 0);
+      let roll = Math.random() * total;
+      for (let i = 0; i < ores.length; i++) {
+        roll -= weights[i];
+        if (roll <= 0) return ores[i];
+      }
+      return ores[0];
+    }
+
+    function mine(times = 1) {
+      let finds = {};
+      for (let i = 0; i < times; i++) {
+        const ore = weightedOre();
+        const amount = ore.tier <= 2 ? 1 + Math.floor(Math.random() * Math.max(1, state.power)) : 1;
+        state.inv[ore.id] += amount;
+        finds[ore.id] = (finds[ore.id] || 0) + amount;
+        addXp("miner", 5 + ore.tier * 3);
+      }
+
+      const text = Object.entries(finds)
+        .map(([id, amount]) => `${ores.find(ore => ore.id === id).name} ${amount}개`)
+        .join(", ");
+      const rare = Object.keys(finds).some(id => ores.find(ore => ore.id === id).tier >= 5);
+      addLog(`${times}회 채광: ${text}`, rare ? "rare" : "");
+      animateMine();
+      render();
+    }
+
+    function mine(times = 1) {
+      if (state.dungeon.vein <= 0) {
+        toast("이 방의 광맥은 고갈됐습니다. 다른 방을 탐험하세요.");
+        addLog(`${state.dungeon.room}: 광맥이 고갈됐습니다.`, "fail");
+        render();
+        return;
+      }
+
+      times = Math.min(times, state.dungeon.vein);
+      let finds = {};
+      for (let i = 0; i < times; i++) {
+        const ore = weightedOre();
+        const amount = ore.tier <= 2 ? 1 + Math.floor(Math.random() * Math.max(1, state.power)) : 1;
+        state.inv[ore.id] += amount;
+        finds[ore.id] = (finds[ore.id] || 0) + amount;
+        state.dungeon.vein -= 1;
+        addXp("miner", 5 + ore.tier * 3);
+      }
+
+      const text = Object.entries(finds)
+        .map(([id, amount]) => `${ores.find(ore => ore.id === id).name} ${amount}개`)
+        .join(", ");
+      const rare = Object.keys(finds).some(id => ores.find(ore => ore.id === id).tier >= 5);
+      addLog(`${state.dungeon.room} 채광: ${text}`, rare ? "rare" : "");
+      if (state.dungeon.vein <= 0) addLog(`${state.dungeon.room}의 광맥을 모두 캤습니다.`, "gold");
+      animateMine();
+      render();
+    }
+
+    function chooseRoom(extraDepth = 0) {
+      const targetDepth = dungeonDepth() + extraDepth;
+      const candidates = roomTypes.filter(room => room.depth <= targetDepth + 1);
+      const pool = candidates.length ? candidates : roomTypes;
+      const room = pool[Math.floor(Math.random() * pool.length)];
+      const bonus = Math.max(0, state.dungeon.depth - 1);
+      const maxVein = room.vein + Math.floor(Math.random() * 2) + Math.floor(bonus / 3);
+      return { ...room, maxVein, vein: maxVein };
+    }
+
+    function explore(direction) {
+      const deltas = {
+        north: [0, -1],
+        south: [0, 1],
+        west: [-1, 0],
+        east: [1, 0],
+        deeper: [0, 0]
+      };
+      const [dx, dy] = deltas[direction] || [0, 0];
+      if (direction === "deeper") {
+        state.dungeon.depth += 1;
+      } else {
+        state.dungeon.x += dx;
+        state.dungeon.y += dy;
+        if (Math.random() < 0.28) state.dungeon.depth += 1;
+      }
+
+      const room = chooseRoom(direction === "deeper" ? 2 : 0);
+      state.dungeon.room = room.name;
+      state.dungeon.desc = room.desc;
+      state.dungeon.danger = Math.min(9, room.danger + Math.floor(state.dungeon.depth / 3));
+      state.dungeon.vein = room.vein;
+      state.dungeon.maxVein = room.maxVein;
+      state.dungeon.visited[`${state.dungeon.x},${state.dungeon.y}`] = true;
+
+      const trouble = Math.random() < state.dungeon.danger * 0.045;
+      if (trouble) {
+        const lost = Math.min(state.gold, 3 + state.dungeon.danger * 2);
+        state.gold -= lost;
+        addLog(`${state.dungeon.room}: 낙석을 피해 이동했습니다.${lost ? ` 수리비 ${lost}골드` : ""}`, "fail");
+      } else {
+        addLog(`${state.dungeon.room}을 발견했습니다. 광맥 ${state.dungeon.vein}개`, state.dungeon.danger >= 4 ? "rare" : "");
+      }
+      addXp("miner", 2 + state.dungeon.danger);
+      render();
+    }
+
+    function returnCamp() {
+      state.dungeon = JSON.parse(JSON.stringify(defaultDungeon));
+      addLog("대장간으로 귀환했습니다. 장비를 손보고 다시 내려갈 수 있습니다.", "success");
+      render();
+    }
+
+    function addXp(kind, amount) {
+      const levelKey = kind === "miner" ? "minerLevel" : "smithLevel";
+      const xpKey = kind === "miner" ? "minerXp" : "smithXp";
+      state[xpKey] += amount;
+      while (state[xpKey] >= xpNeed(state[levelKey])) {
+        state[xpKey] -= xpNeed(state[levelKey]);
+        state[levelKey] += 1;
+        addLog(`${kind === "miner" ? "광부" : "대장장이"} 레벨이 ${state[levelKey]}이 되었습니다.`, "success");
+      }
+    }
+
+    function sellCommon() {
+      let gained = 0;
+      for (const ore of ores) {
+        const keep = ore.tier >= 4 ? state.inv[ore.id] : Math.min(state.inv[ore.id], 6);
+        const sell = state.inv[ore.id] - keep;
+        if (sell > 0) {
+          state.inv[ore.id] -= sell;
+          gained += sell * ore.value;
+        }
+      }
+      state.gold += gained;
+      addLog(gained ? `남는 광석을 팔아 ${gained} 골드를 얻었습니다.` : "팔 수 있는 남는 광석이 없습니다.", gained ? "gold" : "");
+      render();
+    }
+
+    function upgradePick() {
+      const cost = 80 + state.power * state.power * 55;
+      if (state.gold < cost) {
+        toast(`곡괭이 강화에는 ${cost} 골드가 필요합니다.`);
+        return;
+      }
+      state.gold -= cost;
+      state.power += 1;
+      addLog(`곡괭이를 강화했습니다. 채광력 ${state.power}`, "success");
+      render();
+    }
+
+    function buyShopItem(itemId) {
+      const item = shopItems.find(entry => entry.id === itemId);
+      if (!item || state.shop.owned[item.id]) return;
+      if (state.gold < item.cost) {
+        toast(`${item.name} 구매에는 ${item.cost} 골드가 필요합니다.`);
+        return;
+      }
+      state.gold -= item.cost;
+      state.shop.owned[item.id] = true;
+      state.power += item.power;
+      state.rareBoost += item.rareBoost;
+      addLog(`${item.name}을 구매했습니다. 채광력 +${item.power}`, "success");
+      toast(`${item.name} 구매 완료`);
+      render();
+    }
+
+    function canCraft(recipe) {
+      return Object.entries(recipe.needs).every(([id, amount]) => state.inv[id] >= amount);
+    }
+
+    function craft(recipeId = $("recipeSelect").value) {
+      const recipe = recipes.find(item => item.id === recipeId);
+      if (!recipe) return;
+      if (state.smithLevel < recipe.level) {
+        toast(`대장장이 레벨 ${recipe.level}부터 제작할 수 있습니다.`);
+        return;
+      }
+      if (!canCraft(recipe)) {
+        toast("재료가 부족합니다.");
+        return;
+      }
+
+      animateForge();
+      for (const [id, amount] of Object.entries(recipe.needs)) state.inv[id] -= amount;
+      const successRate = Math.min(.94, .52 + state.smithLevel * .035 + state.mastery * .003 + state.forgeBoost);
+      const success = Math.random() < successRate;
+
+      if (success) {
+        state.gold += recipe.gold;
+        state.mastery += recipe.mastery;
+        state.crafted[recipe.id] = (state.crafted[recipe.id] || 0) + 1;
+        if (recipe.power) state.power += recipe.power;
+        if (recipe.rareBoost) state.rareBoost += recipe.rareBoost;
+        if (recipe.forgeBoost) state.forgeBoost += recipe.forgeBoost;
+        addXp("smith", recipe.xp);
+        addLog(`${recipe.name} 제작 성공! ${recipe.unlock}`, "success");
+        toast(`${recipe.name} 제작 성공`);
+      } else {
+        state.mastery += Math.max(1, Math.floor(recipe.mastery / 3));
+        addXp("smith", Math.max(4, Math.floor(recipe.xp / 3)));
+        addLog(`${recipe.name} 제작 실패. 그래도 숙련도가 올랐습니다.`, "fail");
+        toast("제작 실패. 다음 망치질은 더 좋아집니다.");
+      }
+      render();
+    }
+
+    function animateForge() {
+      const forge = document.querySelector(".forge");
+      forge.classList.remove("striking");
+      void forge.offsetWidth;
+      forge.classList.add("striking");
+      clearTimeout(animateForge.timer);
+      animateForge.timer = setTimeout(() => forge.classList.remove("striking"), 820);
+    }
+
+    function addLog(text, cls = "") {
+      state.log.unshift({ text, cls, time: new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" }) });
+      state.log = state.log.slice(0, 80);
+    }
+
+    function playMineSound() {
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) {
+          playFallbackMineSound();
+          return;
+        }
+        const ctx = playMineSound.ctx || new AudioContext();
+        playMineSound.ctx = ctx;
+        if (ctx.state === "suspended") ctx.resume();
+
+        const now = ctx.currentTime;
+        const master = ctx.createGain();
+        master.gain.setValueAtTime(0.0001, now);
+        master.gain.exponentialRampToValueAtTime(0.28, now + 0.012);
+        master.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+        master.connect(ctx.destination);
+
+        const ring = ctx.createOscillator();
+        const ringGain = ctx.createGain();
+        ring.type = "triangle";
+        ring.frequency.setValueAtTime(880, now);
+        ring.frequency.exponentialRampToValueAtTime(520, now + 0.16);
+        ringGain.gain.setValueAtTime(0.32, now);
+        ringGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
+        ring.connect(ringGain).connect(master);
+        ring.start(now);
+        ring.stop(now + 0.22);
+
+        const scrape = ctx.createOscillator();
+        const scrapeGain = ctx.createGain();
+        scrape.type = "square";
+        scrape.frequency.setValueAtTime(130, now + 0.035);
+        scrape.frequency.exponentialRampToValueAtTime(75, now + 0.18);
+        scrapeGain.gain.setValueAtTime(0.14, now + 0.035);
+        scrapeGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.19);
+        scrape.connect(scrapeGain).connect(master);
+        scrape.start(now + 0.035);
+        scrape.stop(now + 0.2);
+      } catch {
+        playFallbackMineSound();
+      }
+    }
+
+    function playFallbackMineSound() {
+      try {
+        if (!playFallbackMineSound.src) playFallbackMineSound.src = buildMineSoundWav();
+        const sound = new Audio(playFallbackMineSound.src);
+        sound.volume = 0.42;
+        sound.play().catch(() => {});
+      } catch {}
+    }
+
+    function buildMineSoundWav() {
+      const sampleRate = 22050;
+      const duration = 0.22;
+      const samples = Math.floor(sampleRate * duration);
+      const data = new Int16Array(samples);
+      for (let i = 0; i < samples; i++) {
+        const t = i / sampleRate;
+        const decay = Math.exp(-18 * t);
+        const ring = Math.sin(2 * Math.PI * (880 - 1400 * t) * t) * decay;
+        const crunch = ((Math.random() * 2 - 1) * Math.exp(-28 * Math.max(0, t - 0.035))) * 0.35;
+        data[i] = Math.max(-1, Math.min(1, ring * 0.75 + crunch)) * 32767;
+      }
+
+      const bytes = [];
+      const pushText = text => [...text].forEach(char => bytes.push(char.charCodeAt(0)));
+      const push16 = value => { bytes.push(value & 255, value >> 8 & 255); };
+      const push32 = value => { bytes.push(value & 255, value >> 8 & 255, value >> 16 & 255, value >> 24 & 255); };
+      pushText("RIFF");
+      push32(36 + data.length * 2);
+      pushText("WAVEfmt ");
+      push32(16);
+      push16(1);
+      push16(1);
+      push32(sampleRate);
+      push32(sampleRate * 2);
+      push16(2);
+      push16(16);
+      pushText("data");
+      push32(data.length * 2);
+      for (const sample of data) push16(sample < 0 ? sample + 65536 : sample);
+      let binary = "";
+      for (const byte of bytes) binary += String.fromCharCode(byte);
+      return `data:audio/wav;base64,${btoa(binary)}`;
+    }
+
+    function animateMine() {
+      const scene = document.querySelector(".mine-scene");
+      const miner = $("minerSvg");
+      const debris = $("debris");
+      const impactRing = $("impactRing");
+      playMineSound();
+      scene.classList.remove("hit");
+      miner.classList.remove("mining");
+      $("spark").classList.remove("show");
+      debris.classList.remove("show");
+      impactRing.classList.remove("show");
+      void miner.offsetWidth;
+      scene.classList.add("hit");
+      miner.classList.add("mining");
+      $("spark").classList.add("show");
+      debris.classList.add("show");
+      impactRing.classList.add("show");
+      clearTimeout(animateMine.timer);
+      animateMine.timer = setTimeout(() => {
+        scene.classList.remove("hit");
+        miner.classList.remove("mining");
+        $("spark").classList.remove("show");
+        debris.classList.remove("show");
+        impactRing.classList.remove("show");
+      }, 820);
+    }
+
+    function chanceSummary() {
+      const trials = 1200;
+      const counts = {};
+      for (let i = 0; i < trials; i++) {
+        const ore = weightedOre();
+        counts[ore.id] = (counts[ore.id] || 0) + 1;
+      }
+      const rareChance = ores
+        .filter(ore => ore.tier >= 5)
+        .reduce((sum, ore) => sum + (counts[ore.id] || 0), 0) / trials * 100;
+      return Math.max(.01, rareChance).toFixed(2);
+    }
+
+    function renderInventory() {
+      $("inventory").innerHTML = ores.map(ore => `
+        <div class="ore-row">
+          <div class="ore-chip" style="background:${ore.color}33;color:${ore.color}">${ore.icon}</div>
+          <div>
+            <div class="name">${ore.name}</div>
+            <div class="hint">등급 ${ore.tier} · 판매가 ${ore.value} 골드</div>
+          </div>
+          <div class="count">${format(state.inv[ore.id] || 0)}</div>
+        </div>
+      `).join("");
+    }
+
+    function renderShop() {
+      $("shopList").innerHTML = shopItems.map(item => {
+        const owned = !!state.shop.owned[item.id];
+        const affordable = state.gold >= item.cost;
+        const bonus = [
+          `채광력 +${item.power}`,
+          item.rareBoost ? `희귀 확률 +${Math.round(item.rareBoost * 100)}%` : ""
+        ].filter(Boolean).join(" · ");
+        return `
+          <div class="recipe-row">
+            <div>
+              <div class="name">${item.name} ${owned ? `<span class="hint">보유중</span>` : ""}</div>
+              <div class="hint">${bonus}</div>
+              <div class="hint">${item.desc}</div>
+            </div>
+            <button class="btn" ${owned || !affordable ? "disabled" : ""} onclick="buyShopItem('${item.id}')">
+              ${owned ? "구매완료" : `${format(item.cost)}G`}
+            </button>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderRecipes() {
+      $("recipeSelect").innerHTML = recipes.map(recipe => {
+        const locked = state.smithLevel < recipe.level ? "잠김" : "제작 가능";
+        return `<option value="${recipe.id}">${recipe.name} · Lv.${recipe.level} · ${locked}</option>`;
+      }).join("");
+
+      $("recipeList").innerHTML = recipes.map(recipe => {
+        const needs = Object.entries(recipe.needs)
+          .map(([id, amount]) => {
+            const ore = ores.find(item => item.id === id);
+            const enough = state.inv[id] >= amount;
+            return `<span class="${enough ? "success" : "fail"}">${ore.name} ${state.inv[id]}/${amount}</span>`;
+          }).join(" · ");
+        const locked = state.smithLevel < recipe.level;
+        return `
+          <div class="recipe-row">
+            <div>
+              <div class="name">${recipe.name} ${state.crafted[recipe.id] ? `<span class="hint">x${state.crafted[recipe.id]}</span>` : ""}</div>
+              <div class="hint">필요 레벨 ${recipe.level} · ${needs}</div>
+              <div class="hint">${recipe.unlock}</div>
+            </div>
+            <button class="btn" ${locked || !canCraft(recipe) ? "disabled" : ""} onclick="craft('${recipe.id}')">제작</button>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderLog() {
+      $("log").innerHTML = state.log.map(item => {
+        if (typeof item === "string") return `<div class="log-row">${item}</div>`;
+        return `<div class="log-row ${item.cls || ""}"><span>${item.time} · ${item.text}</span></div>`;
+      }).join("");
+    }
+
+    function renderDungeon() {
+      $("roomName").textContent = state.dungeon.room;
+      $("roomDesc").textContent = state.dungeon.desc;
+      $("dungeonDepth").textContent = `${state.dungeon.depth}층`;
+      $("dangerLevel").textContent = state.dungeon.danger;
+      $("veinText").textContent = `${state.dungeon.vein}/${state.dungeon.maxVein}`;
+      $("veinFill").style.width = `${state.dungeon.maxVein ? state.dungeon.vein / state.dungeon.maxVein * 100 : 0}%`;
+
+      const cells = [];
+      for (let y = state.dungeon.y - 1; y <= state.dungeon.y + 1; y++) {
+        for (let x = state.dungeon.x - 1; x <= state.dungeon.x + 1; x++) {
+          const key = `${x},${y}`;
+          const cls = x === state.dungeon.x && y === state.dungeon.y ? "current" : state.dungeon.visited[key] ? "visited" : "";
+          cells.push(`<div class="map-cell ${cls}"></div>`);
+        }
+      }
+      $("miniMap").innerHTML = cells.join("");
+      $("mineBtn").disabled = state.dungeon.vein <= 0;
+      $("bulkMineBtn").disabled = state.dungeon.vein <= 0;
+    }
+
+    function render() {
+      $("minerLevel").textContent = state.minerLevel;
+      $("smithLevel").textContent = state.smithLevel;
+      $("gold").textContent = format(state.gold);
+      $("power").textContent = state.power;
+      $("mastery").textContent = format(state.mastery);
+      $("depth").textContent = `${dungeonDepth()}층`;
+      $("minerXp").style.width = `${Math.min(100, state.minerXp / xpNeed(state.minerLevel) * 100)}%`;
+      $("smithXp").style.width = `${Math.min(100, state.smithXp / xpNeed(state.smithLevel) * 100)}%`;
+      $("mineChance").textContent = `특수금속 예상 ${chanceSummary()}%`;
+      const successRate = Math.min(94, (52 + state.smithLevel * 3.5 + state.mastery * .3 + state.forgeBoost * 100));
+      $("forgeChance").textContent = `기본 성공률 ${successRate.toFixed(0)}%`;
+      $("shopOpenBtn").textContent = "상점 열기";
+      renderInventory();
+      renderShop();
+      renderRecipes();
+      renderDungeon();
+      renderLog();
+      save(false);
+    }
+
+    function toast(text) {
+      $("toast").textContent = text;
+      $("toast").classList.add("show");
+      clearTimeout(toast.timer);
+      toast.timer = setTimeout(() => $("toast").classList.remove("show"), 1800);
+    }
+
+    $("mineBtn").addEventListener("click", () => mine(1));
+    $("bulkMineBtn").addEventListener("click", () => mine(10));
+    $("northBtn").addEventListener("click", () => explore("north"));
+    $("southBtn").addEventListener("click", () => explore("south"));
+    $("eastBtn").addEventListener("click", () => explore("east"));
+    $("westBtn").addEventListener("click", () => explore("west"));
+    $("deeperBtn").addEventListener("click", () => explore("deeper"));
+    $("campBtn").addEventListener("click", returnCamp);
+    $("sellBtn").addEventListener("click", sellCommon);
+    $("shopOpenBtn").addEventListener("click", () => {
+      document.querySelectorAll(".tab").forEach(item => item.classList.remove("active"));
+      document.querySelector('[data-tab="shop"]').classList.add("active");
+      $("inventoryTab").classList.add("hidden");
+      $("shopTab").classList.remove("hidden");
+      $("logTab").classList.add("hidden");
+    });
+    $("craftBtn").addEventListener("click", () => craft());
+    $("saveBtn").addEventListener("click", () => save(true));
+    $("resetBtn").addEventListener("click", reset);
+
+    document.querySelectorAll(".tab").forEach(tab => {
+      tab.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach(item => item.classList.remove("active"));
+        tab.classList.add("active");
+        $("inventoryTab").classList.toggle("hidden", tab.dataset.tab !== "inventory");
+        $("shopTab").classList.toggle("hidden", tab.dataset.tab !== "shop");
+        $("logTab").classList.toggle("hidden", tab.dataset.tab !== "log");
+      });
+    });
+
+    render();
+  </script>
+</body>
+</html>
