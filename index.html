@@ -660,11 +660,24 @@
       margin-top: 3px;
     }
 
+    .need-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 8px;
+      align-items: center;
+      overflow-wrap: normal;
+    }
+
+    .need-list span {
+      white-space: nowrap;
+    }
+
     .count {
       font-variant-numeric: tabular-nums;
       min-width: 3ch;
       text-align: right;
       font-weight: 700;
+      white-space: nowrap;
     }
 
     .tabs {
@@ -749,11 +762,56 @@
       transform: translateX(-50%) translateY(0);
     }
 
+    .auth-card {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      margin: 0 0 12px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(18, 26, 30, .78);
+    }
+
+    .auth-fields {
+      display: grid;
+      grid-template-columns: minmax(140px, 1fr) minmax(120px, 160px);
+      gap: 8px;
+      align-items: center;
+    }
+
+    .auth-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .auth-card input {
+      width: 100%;
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #11171b;
+      color: var(--text);
+      padding: 8px 10px;
+      outline: none;
+    }
+
+    .auth-card input:focus {
+      border-color: rgba(114, 213, 139, .75);
+      box-shadow: 0 0 0 3px rgba(114, 213, 139, .12);
+    }
+
     @media (max-width: 980px) {
       .layout { grid-template-columns: 1fr; }
       .topbar { grid-template-columns: 1fr; }
       .controls { justify-content: stretch; }
       .controls .btn { flex: 1; }
+      .auth-card { grid-template-columns: 1fr; }
+      .auth-actions { justify-content: stretch; }
+      .auth-actions .btn { flex: 1; }
     }
 
     @media (max-width: 560px) {
@@ -762,6 +820,7 @@
       .mine-scene, .forge { height: 205px; }
       .recipe-row { grid-template-columns: 1fr; }
       .recipe-row .btn { width: 100%; }
+      .auth-fields { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -770,11 +829,29 @@
     <section class="topbar">
       <div>
         <h1>Miner & Blacksmith</h1>
-        <div class="subtitle">희귀 금속을 캐고, 제련하고, 장비를 만들어 더 깊은 광산으로 내려가세요.</div>
+        <div class="subtitle">던전을 탐험하며 희귀 금속을 캐고, 제련하고, 장비를 만들어 더 깊은 광산으로 내려가세요.</div>
       </div>
       <div class="controls">
+        <button class="btn" id="bgmBtn" title="긴장감 있는 배경음 켜기">BGM 꺼짐</button>
         <button class="btn" id="saveBtn" title="현재 진행 저장">저장</button>
         <button class="btn" id="resetBtn" title="처음부터 다시 시작">초기화</button>
+      </div>
+    </section>
+
+    <section class="auth-card" id="authCard">
+      <div>
+        <div class="name" id="authStatus">로그인하면 진행 상황을 클라우드에 저장합니다.</div>
+        <div class="hint" id="cloudStatus">Vercel 환경변수와 Supabase DB 설정이 필요합니다.</div>
+      </div>
+      <div class="auth-fields" id="authFields">
+        <input id="authEmail" type="email" autocomplete="email" placeholder="이메일">
+        <input id="authPassword" type="password" autocomplete="current-password" placeholder="비밀번호">
+      </div>
+      <div class="auth-actions">
+        <button class="btn primary" id="loginBtn">로그인</button>
+        <button class="btn" id="signupBtn">회원가입</button>
+        <button class="btn hidden" id="logoutBtn">로그아웃</button>
+        <button class="btn hidden" id="cloudSaveBtn">클라우드 저장</button>
       </div>
     </section>
 
@@ -782,7 +859,7 @@
       <article class="panel">
         <header>
           <h2>채광</h2>
-          <span class="hint" id="mineChance">희귀 확률 계산 중</span>
+          <span class="hint" id="mineChance">특수금속 예상 계산 중</span>
         </header>
         <div class="body">
           <div class="mine-scene">
@@ -840,134 +917,23 @@
             </svg>
             <div class="spark" id="spark"></div>
             <div class="impact-ring" id="impactRing" aria-hidden="true"></div>
-            <div class="debris" id="debris" aria-hidden="true">
-              <span class="chip"></span>
-              <span class="chip"></span>
-              <span class="chip"></span>
-              <span class="chip"></span>
-            </div>
+            <div class="debris" id="debris" aria-hidden="true"><span class="chip"></span><span class="chip"></span><span class="chip"></span><span class="chip"></span></div>
           </div>
 
           <div class="dungeon-card">
-            <div class="dungeon-head">
-              <div>
-                <div class="label">던전 탐험</div>
-                <div class="dungeon-name" id="roomName">광산 입구</div>
-              </div>
-              <div class="value" id="dungeonDepth">1층</div>
-            </div>
-            <div class="dungeon-grid">
-              <div class="mini-map" id="miniMap" aria-hidden="true"></div>
-              <div class="dungeon-meta">
-                <div id="roomDesc">낡은 광산 입구입니다. 안쪽에서 광맥이 희미하게 빛납니다.</div>
-                <div>위험도 <span id="dangerLevel">0</span> · 광맥 <span id="veinText">2/2</span></div>
-                <div class="vein-meter"><div class="vein-fill" id="veinFill"></div></div>
-              </div>
-            </div>
-            <div class="travel-grid">
-              <button class="btn" id="northBtn">북쪽</button>
-              <button class="btn" id="deeperBtn">깊은 길</button>
-              <button class="btn" id="eastBtn">동쪽</button>
-              <button class="btn" id="westBtn">서쪽</button>
-              <button class="btn" id="campBtn">대장간 귀환</button>
-              <button class="btn" id="southBtn">남쪽</button>
-            </div>
+            <div class="dungeon-head"><div><div class="label">던전 탐험</div><div class="dungeon-name" id="roomName">광산 입구</div></div><div class="value" id="dungeonDepth">1층</div></div>
+            <div class="dungeon-grid"><div class="mini-map" id="miniMap" aria-hidden="true"></div><div class="dungeon-meta"><div id="roomDesc">따뜻한 공기와 이어진 안전한 갱도입니다.</div><div>위험도 <span id="dangerLevel">0</span> · 광맥 <span id="veinText">2/2</span></div><div class="vein-meter"><div class="vein-fill" id="veinFill"></div></div></div></div>
+            <div class="travel-grid"><button class="btn" id="northBtn">북쪽</button><button class="btn" id="deeperBtn">깊은 길</button><button class="btn" id="eastBtn">동쪽</button><button class="btn" id="westBtn">서쪽</button><button class="btn" id="campBtn">대장간 귀환</button><button class="btn" id="southBtn">남쪽</button></div>
           </div>
 
-          <div class="stats">
-            <div class="stat">
-              <div class="label">광부 레벨</div>
-              <div class="value" id="minerLevel">1</div>
-              <div class="bar"><div class="fill" id="minerXp"></div></div>
-            </div>
-            <div class="stat">
-              <div class="label">채광력</div>
-              <div class="value" id="power">1</div>
-              <div class="hint">곡괭이와 장비로 증가</div>
-            </div>
-            <div class="stat">
-              <div class="label">골드</div>
-              <div class="value gold" id="gold">0</div>
-              <div class="hint">광석 판매와 제작 보상</div>
-            </div>
-            <div class="stat">
-              <div class="label">깊이</div>
-              <div class="value" id="depth">1층</div>
-              <div class="hint">레벨이 오르면 자동 상승</div>
-            </div>
-          </div>
-
-          <div class="action-grid">
-            <button class="btn primary" id="mineBtn">⛏ 채광</button>
-            <button class="btn" id="bulkMineBtn">⛏⛏ 10회 채광</button>
-            <button class="btn" id="sellBtn">광석 판매</button>
-            <button class="btn" id="shopOpenBtn">상점 열기</button>
-          </div>
+          <div class="stats"><div class="stat"><div class="label">광부 레벨</div><div class="value" id="minerLevel">1</div><div class="bar"><div class="fill" id="minerXp"></div></div></div><div class="stat"><div class="label">채광력</div><div class="value" id="power">1</div><div class="hint">곡괭이와 장비로 증가</div></div><div class="stat"><div class="label">골드</div><div class="value gold" id="gold">0</div><div class="hint">광석 판매와 제작 보상</div></div><div class="stat"><div class="label">깊이</div><div class="value" id="depth">1층</div><div class="hint">레벨이 오르면 자동 상승</div></div></div>
+          <div class="action-grid"><button class="btn primary" id="mineBtn">⛏ 채광</button><button class="btn" id="bulkMineBtn">⛏⛏ 10회 채광</button><button class="btn" id="sellBtn">광석 판매</button><button class="btn" id="shopOpenBtn">상점 열기</button></div>
         </div>
       </article>
 
-      <article class="panel">
-        <header>
-          <h2>대장간</h2>
-          <span class="hint" id="forgeChance">성공률 계산 중</span>
-        </header>
-        <div class="body">
-          <div class="forge">
-            <div class="flame"></div>
-            <svg class="forge-hammer" id="forgeHammer" viewBox="0 0 118 102" aria-hidden="true">
-              <path d="M28 16 L86 76" stroke="#5f4634" stroke-width="16" stroke-linecap="round"/>
-              <path d="M30 15 L88 74" stroke="#9a7149" stroke-width="10" stroke-linecap="round"/>
-              <path d="M73 64 L98 56 L111 70 L86 83 Z" fill="#9aa4a9"/>
-              <path d="M97 56 L116 62 L118 75 L108 72 Z" fill="#c1c9cd"/>
-              <path d="M75 65 L88 83 L73 90 L60 72 Z" fill="#59636b"/>
-            </svg>
-            <div class="anvil"></div>
-            <div class="forge-ring" aria-hidden="true"></div>
-            <div class="forge-spark" aria-hidden="true">
-              <span></span>
-              <span></span>
-              <span></span>
-              <span></span>
-            </div>
-          </div>
+      <article class="panel"><header><h2>대장간</h2><span class="hint" id="forgeChance">기본 성공률 계산 중</span></header><div class="body"><div class="forge"><div class="flame"></div><svg class="forge-hammer" id="forgeHammer" viewBox="0 0 118 102" aria-hidden="true"><path d="M28 16 L86 76" stroke="#5f4634" stroke-width="16" stroke-linecap="round"/><path d="M30 15 L88 74" stroke="#9a7149" stroke-width="10" stroke-linecap="round"/><path d="M73 64 L98 56 L111 70 L86 83 Z" fill="#9aa4a9"/><path d="M97 56 L116 62 L118 75 L108 72 Z" fill="#c1c9cd"/><path d="M75 65 L88 83 L73 90 L60 72 Z" fill="#59636b"/></svg><div class="anvil"></div><div class="forge-ring" aria-hidden="true"></div><div class="forge-spark" aria-hidden="true"><span></span><span></span><span></span><span></span></div></div><div class="stats"><div class="stat"><div class="label">대장장이 레벨</div><div class="value" id="smithLevel">1</div><div class="bar"><div class="fill" id="smithXp"></div></div></div><div class="stat"><div class="label">숙련도</div><div class="value" id="mastery">0</div><div class="hint">실패해도 조금 오릅니다</div></div></div><div class="select-line"><select id="recipeSelect" aria-label="제작 선택"></select><button class="btn hot" id="craftBtn">제작</button></div><div id="recipeList"></div></div></article>
 
-          <div class="stats">
-            <div class="stat">
-              <div class="label">대장장이 레벨</div>
-              <div class="value" id="smithLevel">1</div>
-              <div class="bar"><div class="fill" id="smithXp"></div></div>
-            </div>
-            <div class="stat">
-              <div class="label">숙련도</div>
-              <div class="value" id="mastery">0</div>
-              <div class="hint">실패해도 조금 오른다</div>
-            </div>
-          </div>
-
-          <div class="select-line">
-            <select id="recipeSelect" aria-label="제작 선택"></select>
-            <button class="btn hot" id="craftBtn">제작</button>
-          </div>
-          <div id="recipeList"></div>
-        </div>
-      </article>
-
-      <article class="panel">
-        <div class="tabs">
-          <button class="tab active" data-tab="inventory">인벤토리</button>
-          <button class="tab" data-tab="shop">상점</button>
-          <button class="tab" data-tab="log">기록</button>
-        </div>
-        <div class="body" id="inventoryTab">
-          <div id="inventory"></div>
-        </div>
-        <div class="body hidden" id="shopTab">
-          <div id="shopList"></div>
-        </div>
-        <div class="body hidden" id="logTab">
-          <div class="log" id="log"></div>
-        </div>
-      </article>
+      <article class="panel"><div class="tabs"><button class="tab active" data-tab="inventory">인벤토리</button><button class="tab" data-tab="shop">상점</button><button class="tab" data-tab="log">기록</button></div><div class="body" id="inventoryTab"><div id="inventory"></div></div><div class="body hidden" id="shopTab"><div id="shopList"></div></div><div class="body hidden" id="logTab"><div class="log" id="log"></div></div></article>
     </section>
   </main>
 
@@ -977,11 +943,11 @@
     const ores = [
       { id: "stone", name: "돌", icon: "◆", color: "#777f82", tier: 1, value: 1, base: 52 },
       { id: "copper", name: "구리", icon: "●", color: "#c67b44", tier: 1, value: 3, base: 28 },
-      { id: "iron", name: "철", icon: "⬣", color: "#b8c3c8", tier: 2, value: 7, base: 13 },
+      { id: "iron", name: "철", icon: "⬟", color: "#b8c3c8", tier: 2, value: 7, base: 13 },
       { id: "silver", name: "은", icon: "✦", color: "#dce8ef", tier: 3, value: 18, base: 4.6 },
       { id: "mithril", name: "미스릴", icon: "✧", color: "#6fd7ff", tier: 4, value: 55, base: 1.6 },
-      { id: "adamant", name: "아다만트", icon: "✹", color: "#a68cff", tier: 5, value: 140, base: .55 },
-      { id: "orichalcum", name: "오리하르콘", icon: "✺", color: "#ffcf61", tier: 6, value: 360, base: .16 },
+      { id: "adamant", name: "아다만트", icon: "✺", color: "#a68cff", tier: 5, value: 140, base: .55 },
+      { id: "orichalcum", name: "오리하르콘", icon: "✹", color: "#ffcf61", tier: 6, value: 360, base: .16 },
       { id: "starsteel", name: "성철", icon: "✷", color: "#f47eff", tier: 7, value: 900, base: .045 }
     ];
 
@@ -996,22 +962,22 @@
     ];
 
     const shopItems = [
-      { id: "sturdyPick", name: "튼튼한 곡괭이", cost: 90, power: 1, rareBoost: 0, desc: "기본 채광력을 올려 초반 탐험이 빨라집니다." },
-      { id: "ironPickShop", name: "철제 광부 곡괭이", cost: 240, power: 2, rareBoost: .02, desc: "깊은 길에서 광맥을 더 안정적으로 캡니다." },
+      { id: "sturdyPick", name: "튼튼한 곡괭이", cost: 90, power: 1, rareBoost: 0, desc: "기본 채광력을 올려 초반 탐험을 빠르게 합니다." },
+      { id: "ironPickShop", name: "철제 광부 곡괭이", cost: 240, power: 2, rareBoost: .02, desc: "깊은 길에서도 광맥을 안정적으로 캡니다." },
       { id: "prospectorPick", name: "탐광꾼 곡괭이", cost: 520, power: 3, rareBoost: .06, desc: "희귀 금속을 찾는 감각이 좋아집니다." },
-      { id: "mithrilPick", name: "미스릴 곡괭이", cost: 1200, power: 5, rareBoost: .12, desc: "푸른 광맥과 심층 광맥에 강합니다." },
+      { id: "mithrilPick", name: "미스릴 곡괭이", cost: 1200, power: 5, rareBoost: .12, desc: "푸른 광맥과 보석 광맥에 강합니다." },
       { id: "orichalcumPick", name: "오리하르콘 곡괭이", cost: 2800, power: 8, rareBoost: .22, desc: "던전 깊은 곳의 특수 금속을 노립니다." }
     ];
 
     const roomTypes = [
-      { name: "광산 입구", desc: "대장간과 이어진 안전한 갱도입니다.", vein: 2, danger: 0, depth: 0 },
+      { name: "광산 입구", desc: "따뜻한 공기와 이어진 안전한 갱도입니다.", vein: 2, danger: 0, depth: 0 },
       { name: "구리빛 갈림길", desc: "벽면에 구리 광맥이 길게 이어져 있습니다.", vein: 3, danger: 1, depth: 0 },
-      { name: "젖은 석회 동굴", desc: "발밑이 미끄럽지만 광석 흔적이 많습니다.", vein: 3, danger: 2, depth: 1 },
+      { name: "젖은 석회 동굴", desc: "발밑은 미끄럽지만 광석 흔적이 많습니다.", vein: 3, danger: 2, depth: 1 },
       { name: "버려진 광부 야영지", desc: "오래된 도구와 꺼진 화로가 남아 있습니다.", vein: 2, danger: 1, depth: 1 },
       { name: "푸른 수정 광맥", desc: "미스릴 기운이 희미하게 새어 나옵니다.", vein: 4, danger: 3, depth: 2 },
-      { name: "무너진 채굴장", desc: "낙석 위험이 있지만 깊은 광물이 드러나 있습니다.", vein: 5, danger: 4, depth: 3 },
-      { name: "고대 용광로 터", desc: "대장장이들이 남긴 열기가 아직 벽에 남아 있습니다.", vein: 4, danger: 3, depth: 3 },
-      { name: "별빛 심층 광맥", desc: "아주 희귀한 금속이 나올 수 있는 깊은 방입니다.", vein: 6, danger: 5, depth: 5 }
+      { name: "무너진 채굴장", desc: "낙석 위험은 있지만 깊은 광맥이 드러나 있습니다.", vein: 5, danger: 4, depth: 3 },
+      { name: "고대 용광로터", desc: "대장장이들의 열기가 아직 벽에 남아 있습니다.", vein: 4, danger: 3, depth: 3 },
+      { name: "별빛 보석 광맥", desc: "아주 희귀한 금속이 나올 수 있는 깊은 방입니다.", vein: 6, danger: 5, depth: 5 }
     ];
 
     const defaultDungeon = {
@@ -1019,7 +985,7 @@
       y: 0,
       depth: 1,
       room: "광산 입구",
-      desc: "대장간과 이어진 안전한 갱도입니다.",
+      desc: "따뜻한 공기와 이어진 안전한 갱도입니다.",
       danger: 0,
       vein: 2,
       maxVein: 2,
@@ -1046,7 +1012,21 @@
     let state = load();
 
     const $ = id => document.getElementById(id);
+    const CLOUD_SAVE_TABLE = "game_saves";
+    let supabaseClient = null;
+    let currentUser = null;
+    let cloudSaveTimer = null;
+    let cloudSaveBusy = false;
+
     const format = number => Math.floor(number).toLocaleString("ko-KR");
+    const compactFormat = number => {
+      const value = Math.floor(Number(number) || 0);
+      if (value < 100000) return value.toLocaleString("ko-KR");
+      return new Intl.NumberFormat("ko-KR", {
+        notation: "compact",
+        maximumFractionDigits: 1
+      }).format(value);
+    };
 
     function xpNeed(level) {
       return Math.floor(35 + level * level * 17);
@@ -1056,19 +1036,23 @@
       return JSON.parse(JSON.stringify(defaultState));
     }
 
+    function hydrateState(saved) {
+      const base = cloneDefault();
+      return {
+        ...base,
+        ...(saved || {}),
+        inv: { ...base.inv, ...(saved?.inv || {}) },
+        dungeon: { ...base.dungeon, ...(saved?.dungeon || {}), visited: { ...base.dungeon.visited, ...(saved?.dungeon?.visited || {}) } },
+        shop: { ...base.shop, ...(saved?.shop || {}), owned: { ...base.shop.owned, ...(saved?.shop?.owned || {}) } },
+        crafted: saved?.crafted || {},
+        log: saved?.log || base.log
+      };
+    }
+
     function load() {
       try {
         const saved = JSON.parse(localStorage.getItem("minerBlacksmithSave"));
-        const base = cloneDefault();
-        return {
-          ...base,
-          ...saved,
-          inv: { ...base.inv, ...(saved?.inv || {}) },
-          dungeon: { ...base.dungeon, ...(saved?.dungeon || {}), visited: { ...base.dungeon.visited, ...(saved?.dungeon?.visited || {}) } },
-          shop: { ...base.shop, ...(saved?.shop || {}), owned: { ...base.shop.owned, ...(saved?.shop?.owned || {}) } },
-          crafted: saved?.crafted || {},
-          log: saved?.log || base.log
-        };
+        return hydrateState(saved);
       } catch {
         return cloneDefault();
       }
@@ -1076,15 +1060,17 @@
 
     function save(show = true) {
       localStorage.setItem("minerBlacksmithSave", JSON.stringify(state));
-      if (show) toast("저장되었습니다.");
+      scheduleCloudSave();
+      if (show) toast("??λ릺?덉뒿?덈떎.");
     }
 
     function reset() {
-      if (!confirm("진행 상황을 모두 지울까요?")) return;
+      if (!confirm("吏꾪뻾 ?곹솴??紐⑤몢 吏?멸퉴??")) return;
       state = cloneDefault();
       localStorage.removeItem("minerBlacksmithSave");
+      scheduleCloudSave();
       render();
-      toast("새 게임을 시작합니다.");
+      toast("??寃뚯엫???쒖옉?⑸땲??");
     }
 
     function dungeonDepth() {
@@ -1112,28 +1098,9 @@
     }
 
     function mine(times = 1) {
-      let finds = {};
-      for (let i = 0; i < times; i++) {
-        const ore = weightedOre();
-        const amount = ore.tier <= 2 ? 1 + Math.floor(Math.random() * Math.max(1, state.power)) : 1;
-        state.inv[ore.id] += amount;
-        finds[ore.id] = (finds[ore.id] || 0) + amount;
-        addXp("miner", 5 + ore.tier * 3);
-      }
-
-      const text = Object.entries(finds)
-        .map(([id, amount]) => `${ores.find(ore => ore.id === id).name} ${amount}개`)
-        .join(", ");
-      const rare = Object.keys(finds).some(id => ores.find(ore => ore.id === id).tier >= 5);
-      addLog(`${times}회 채광: ${text}`, rare ? "rare" : "");
-      animateMine();
-      render();
-    }
-
-    function mine(times = 1) {
       if (state.dungeon.vein <= 0) {
-        toast("이 방의 광맥은 고갈됐습니다. 다른 방을 탐험하세요.");
-        addLog(`${state.dungeon.room}: 광맥이 고갈됐습니다.`, "fail");
+        toast("이 방의 광맥은 고갈되었습니다. 다른 방을 탐험하세요.");
+        addLog(`${state.dungeon.room}: 광맥이 고갈되었습니다.`, "fail");
         render();
         return;
       }
@@ -1194,27 +1161,26 @@
       state.dungeon.maxVein = room.maxVein;
       state.dungeon.visited[`${state.dungeon.x},${state.dungeon.y}`] = true;
 
-      const trouble = Math.random() < state.dungeon.danger * 0.045;
-      if (trouble) {
-        const lost = Math.min(state.gold, 3 + state.dungeon.danger * 2);
+      if (Math.random() < state.dungeon.danger * 0.035) {
+        const lost = Math.min(state.gold, Math.floor(state.dungeon.danger * (2 + Math.random() * 5)));
         state.gold -= lost;
         addLog(`${state.dungeon.room}: 낙석을 피해 이동했습니다.${lost ? ` 수리비 ${lost}골드` : ""}`, "fail");
       } else {
         addLog(`${state.dungeon.room}을 발견했습니다. 광맥 ${state.dungeon.vein}개`, state.dungeon.danger >= 4 ? "rare" : "");
       }
-      addXp("miner", 2 + state.dungeon.danger);
+      save(false);
       render();
     }
 
     function returnCamp() {
       state.dungeon = JSON.parse(JSON.stringify(defaultDungeon));
-      addLog("대장간으로 귀환했습니다. 장비를 손보고 다시 내려갈 수 있습니다.", "success");
+      addLog("따뜻한 입구로 돌아왔습니다. 장비를 살피고 다시 내려갈 수 있습니다.", "success");
       render();
     }
 
     function addXp(kind, amount) {
-      const levelKey = kind === "miner" ? "minerLevel" : "smithLevel";
       const xpKey = kind === "miner" ? "minerXp" : "smithXp";
+      const levelKey = kind === "miner" ? "minerLevel" : "smithLevel";
       state[xpKey] += amount;
       while (state[xpKey] >= xpNeed(state[levelKey])) {
         state[xpKey] -= xpNeed(state[levelKey]);
@@ -1225,23 +1191,20 @@
 
     function sellCommon() {
       let gained = 0;
-      for (const ore of ores) {
-        const keep = ore.tier >= 4 ? state.inv[ore.id] : Math.min(state.inv[ore.id], 6);
-        const sell = state.inv[ore.id] - keep;
-        if (sell > 0) {
-          state.inv[ore.id] -= sell;
-          gained += sell * ore.value;
-        }
-      }
+      ores.filter(ore => ore.tier <= 3).forEach(ore => {
+        const amount = state.inv[ore.id];
+        gained += amount * ore.value;
+        state.inv[ore.id] = 0;
+      });
       state.gold += gained;
-      addLog(gained ? `남는 광석을 팔아 ${gained} 골드를 얻었습니다.` : "팔 수 있는 남는 광석이 없습니다.", gained ? "gold" : "");
+      addLog(gained ? `흔한 광석을 팔아 ${format(gained)} 골드를 벌었습니다.` : "팔 수 있는 흔한 광석이 없습니다.", gained ? "gold" : "");
       render();
     }
 
     function upgradePick() {
-      const cost = 80 + state.power * state.power * 55;
+      const cost = 40 + state.power * state.power * 35;
       if (state.gold < cost) {
-        toast(`곡괭이 강화에는 ${cost} 골드가 필요합니다.`);
+        toast(`곡괭이 강화에는 ${format(cost)} 골드가 필요합니다.`);
         return;
       }
       state.gold -= cost;
@@ -1254,13 +1217,13 @@
       const item = shopItems.find(entry => entry.id === itemId);
       if (!item || state.shop.owned[item.id]) return;
       if (state.gold < item.cost) {
-        toast(`${item.name} 구매에는 ${item.cost} 골드가 필요합니다.`);
+        toast(`${item.name} 구매에는 ${format(item.cost)} 골드가 필요합니다.`);
         return;
       }
       state.gold -= item.cost;
-      state.shop.owned[item.id] = true;
       state.power += item.power;
-      state.rareBoost += item.rareBoost;
+      state.rareBoost += item.rareBoost || 0;
+      state.shop.owned[item.id] = true;
       addLog(`${item.name}을 구매했습니다. 채광력 +${item.power}`, "success");
       toast(`${item.name} 구매 완료`);
       render();
@@ -1283,29 +1246,26 @@
       }
 
       animateForge();
-      for (const [id, amount] of Object.entries(recipe.needs)) state.inv[id] -= amount;
-      const successRate = Math.min(.94, .52 + state.smithLevel * .035 + state.mastery * .003 + state.forgeBoost);
+      Object.entries(recipe.needs).forEach(([id, amount]) => state.inv[id] -= amount);
+      const successRate = Math.min(.95, .48 + state.smithLevel * .045 + state.mastery * .003 + state.forgeBoost);
       const success = Math.random() < successRate;
-
+      addXp("smith", recipe.xp);
+      state.mastery += recipe.mastery;
       if (success) {
         state.gold += recipe.gold;
-        state.mastery += recipe.mastery;
-        state.crafted[recipe.id] = (state.crafted[recipe.id] || 0) + 1;
         if (recipe.power) state.power += recipe.power;
         if (recipe.rareBoost) state.rareBoost += recipe.rareBoost;
         if (recipe.forgeBoost) state.forgeBoost += recipe.forgeBoost;
-        addXp("smith", recipe.xp);
+        state.crafted[recipe.id] = (state.crafted[recipe.id] || 0) + 1;
         addLog(`${recipe.name} 제작 성공! ${recipe.unlock}`, "success");
         toast(`${recipe.name} 제작 성공`);
       } else {
-        state.mastery += Math.max(1, Math.floor(recipe.mastery / 3));
-        addXp("smith", Math.max(4, Math.floor(recipe.xp / 3)));
+        state.mastery += 2;
         addLog(`${recipe.name} 제작 실패. 그래도 숙련도가 올랐습니다.`, "fail");
         toast("제작 실패. 다음 망치질은 더 좋아집니다.");
       }
       render();
     }
-
     function animateForge() {
       const forge = document.querySelector(".forge");
       forge.classList.remove("striking");
@@ -1320,16 +1280,124 @@
       state.log = state.log.slice(0, 80);
     }
 
+    function getAudioContext() {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return null;
+      const ctx = getAudioContext.ctx || new AudioContext();
+      getAudioContext.ctx = ctx;
+      if (ctx.state === "suspended") ctx.resume();
+      return ctx;
+    }
+
+    function startBgm() {
+      const ctx = getAudioContext();
+      if (!ctx || startBgm.playing) return;
+
+      const now = ctx.currentTime;
+      const master = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+      const lfo = ctx.createOscillator();
+      const lfoGain = ctx.createGain();
+      const drones = [43.65, 65.41, 87.31].map((freq, index) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = index === 1 ? "triangle" : "sawtooth";
+        osc.frequency.setValueAtTime(freq, now);
+        osc.detune.setValueAtTime(index === 2 ? -9 : index * 5, now);
+        gain.gain.setValueAtTime(index === 0 ? 0.18 : 0.08, now);
+        osc.connect(gain).connect(filter);
+        osc.start(now);
+        return osc;
+      });
+
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(420, now);
+      filter.Q.setValueAtTime(7, now);
+      lfo.type = "sine";
+      lfo.frequency.setValueAtTime(0.055, now);
+      lfoGain.gain.setValueAtTime(130, now);
+      lfo.connect(lfoGain).connect(filter.frequency);
+      lfo.start(now);
+
+      master.gain.setValueAtTime(0.0001, now);
+      master.gain.exponentialRampToValueAtTime(0.18, now + 1.2);
+      filter.connect(master).connect(ctx.destination);
+
+      const pulse = () => {
+        if (!startBgm.playing) return;
+        const t = ctx.currentTime + 0.02;
+        const boom = ctx.createOscillator();
+        const boomGain = ctx.createGain();
+        boom.type = "sine";
+        boom.frequency.setValueAtTime(54 + Math.random() * 8, t);
+        boom.frequency.exponentialRampToValueAtTime(31, t + 0.5);
+        boomGain.gain.setValueAtTime(0.0001, t);
+        boomGain.gain.exponentialRampToValueAtTime(0.24, t + 0.035);
+        boomGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.7);
+        boom.connect(boomGain).connect(master);
+        boom.start(t);
+        boom.stop(t + 0.75);
+
+        if (Math.random() < 0.42) {
+          const ring = ctx.createOscillator();
+          const ringGain = ctx.createGain();
+          ring.type = "triangle";
+          ring.frequency.setValueAtTime(180 + Math.random() * 80, t + 0.15);
+          ringGain.gain.setValueAtTime(0.0001, t + 0.15);
+          ringGain.gain.exponentialRampToValueAtTime(0.035, t + 0.22);
+          ringGain.gain.exponentialRampToValueAtTime(0.0001, t + 1.2);
+          ring.connect(ringGain).connect(master);
+          ring.start(t + 0.15);
+          ring.stop(t + 1.25);
+        }
+      };
+
+      startBgm.playing = { ctx, master, filter, lfo, drones, interval: setInterval(pulse, 1850) };
+      pulse();
+      updateBgmButton();
+    }
+
+    function stopBgm() {
+      const bgm = startBgm.playing;
+      if (!bgm) return;
+      const now = bgm.ctx.currentTime;
+      clearInterval(bgm.interval);
+      bgm.master.gain.cancelScheduledValues(now);
+      bgm.master.gain.setTargetAtTime(0.0001, now, 0.25);
+      setTimeout(() => {
+        bgm.drones.forEach(osc => {
+          try { osc.stop(); } catch {}
+        });
+        try { bgm.lfo.stop(); } catch {}
+        startBgm.playing = null;
+        updateBgmButton();
+      }, 450);
+    }
+
+    function toggleBgm() {
+      if (startBgm.playing) {
+        stopBgm();
+        toast("BGM 꺼짐");
+      } else {
+        startBgm();
+        toast(startBgm.playing ? "BGM 켜짐" : "이 브라우저는 BGM을 지원하지 않습니다.");
+      }
+    }
+
+    function updateBgmButton() {
+      const btn = $("bgmBtn");
+      if (!btn) return;
+      btn.textContent = startBgm.playing ? "BGM 켜짐" : "BGM 꺼짐";
+      btn.classList.toggle("hot", !!startBgm.playing);
+    }
+
     function playMineSound() {
       try {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (!AudioContext) {
+        const ctx = getAudioContext();
+        if (!ctx) {
           playFallbackMineSound();
           return;
         }
-        const ctx = playMineSound.ctx || new AudioContext();
-        playMineSound.ctx = ctx;
-        if (ctx.state === "suspended") ctx.resume();
 
         const now = ctx.currentTime;
         const master = ctx.createGain();
@@ -1454,9 +1522,9 @@
           <div class="ore-chip" style="background:${ore.color}33;color:${ore.color}">${ore.icon}</div>
           <div>
             <div class="name">${ore.name}</div>
-            <div class="hint">등급 ${ore.tier} · 판매가 ${ore.value} 골드</div>
+            <div class="hint">등급 ${ore.tier} · 판매가 ${format(ore.value)} 골드</div>
           </div>
-          <div class="count">${format(state.inv[ore.id] || 0)}</div>
+          <div class="count" title="${format(state.inv[ore.id] || 0)}">${compactFormat(state.inv[ore.id] || 0)}</div>
         </div>
       `).join("");
     }
@@ -1477,7 +1545,7 @@
               <div class="hint">${item.desc}</div>
             </div>
             <button class="btn" ${owned || !affordable ? "disabled" : ""} onclick="buyShopItem('${item.id}')">
-              ${owned ? "구매완료" : `${format(item.cost)}G`}
+              ${owned ? "구매 완료" : `${format(item.cost)}G`}
             </button>
           </div>
         `;
@@ -1494,15 +1562,18 @@
         const needs = Object.entries(recipe.needs)
           .map(([id, amount]) => {
             const ore = ores.find(item => item.id === id);
-            const enough = state.inv[id] >= amount;
-            return `<span class="${enough ? "success" : "fail"}">${ore.name} ${state.inv[id]}/${amount}</span>`;
-          }).join(" · ");
+            const owned = state.inv[id] || 0;
+            const enough = owned >= amount;
+            const exact = `${ore.name} ${format(owned)}/${format(amount)}`;
+            return `<span class="${enough ? "success" : "fail"}" title="${exact}">${ore.name} ${compactFormat(owned)}/${compactFormat(amount)}</span>`;
+          }).join("");
         const locked = state.smithLevel < recipe.level;
         return `
           <div class="recipe-row">
             <div>
               <div class="name">${recipe.name} ${state.crafted[recipe.id] ? `<span class="hint">x${state.crafted[recipe.id]}</span>` : ""}</div>
-              <div class="hint">필요 레벨 ${recipe.level} · ${needs}</div>
+              <div class="hint">필요 레벨 ${recipe.level}</div>
+              <div class="hint need-list">${needs}</div>
               <div class="hint">${recipe.unlock}</div>
             </div>
             <button class="btn" ${locked || !canCraft(recipe) ? "disabled" : ""} onclick="craft('${recipe.id}')">제작</button>
@@ -1510,11 +1581,10 @@
         `;
       }).join("");
     }
-
     function renderLog() {
       $("log").innerHTML = state.log.map(item => {
         if (typeof item === "string") return `<div class="log-row">${item}</div>`;
-        return `<div class="log-row ${item.cls || ""}"><span>${item.time} · ${item.text}</span></div>`;
+        return `<div class="log-row ${item.cls || ""}"><span>${item.time} 쨌 ${item.text}</span></div>`;
       }).join("");
     }
 
@@ -1535,27 +1605,26 @@
         }
       }
       $("miniMap").innerHTML = cells.join("");
-      $("mineBtn").disabled = state.dungeon.vein <= 0;
-      $("bulkMineBtn").disabled = state.dungeon.vein <= 0;
     }
 
     function render() {
       $("minerLevel").textContent = state.minerLevel;
       $("smithLevel").textContent = state.smithLevel;
-      $("gold").textContent = format(state.gold);
+      $("gold").textContent = compactFormat(state.gold);
       $("power").textContent = state.power;
-      $("mastery").textContent = format(state.mastery);
+      $("mastery").textContent = compactFormat(state.mastery);
       $("depth").textContent = `${dungeonDepth()}층`;
-      $("minerXp").style.width = `${Math.min(100, state.minerXp / xpNeed(state.minerLevel) * 100)}%`;
-      $("smithXp").style.width = `${Math.min(100, state.smithXp / xpNeed(state.smithLevel) * 100)}%`;
+      $("minerXp").style.width = `${state.minerXp / xpNeed(state.minerLevel) * 100}%`;
+      $("smithXp").style.width = `${state.smithXp / xpNeed(state.smithLevel) * 100}%`;
       $("mineChance").textContent = `특수금속 예상 ${chanceSummary()}%`;
-      const successRate = Math.min(94, (52 + state.smithLevel * 3.5 + state.mastery * .3 + state.forgeBoost * 100));
+      const successRate = Math.min(95, 48 + state.smithLevel * 4.5 + state.mastery * .3 + state.forgeBoost * 100);
       $("forgeChance").textContent = `기본 성공률 ${successRate.toFixed(0)}%`;
       $("shopOpenBtn").textContent = "상점 열기";
+      updateBgmButton();
+      renderDungeon();
       renderInventory();
       renderShop();
       renderRecipes();
-      renderDungeon();
       renderLog();
       save(false);
     }
@@ -1565,6 +1634,153 @@
       $("toast").classList.add("show");
       clearTimeout(toast.timer);
       toast.timer = setTimeout(() => $("toast").classList.remove("show"), 1800);
+    }
+
+    async function initSupabase() {
+      updateAuthUI("Supabase 연결 확인 중");
+      try {
+        const config = await loadSupabaseConfig();
+        if (!config?.supabaseUrl || !config?.supabaseAnonKey) {
+          updateAuthUI("Supabase 설정 대기 중");
+          return;
+        }
+
+        const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
+        supabaseClient = createClient(config.supabaseUrl, config.supabaseAnonKey, {
+          auth: {
+            autoRefreshToken: true,
+            persistSession: true,
+            detectSessionInUrl: true
+          }
+        });
+
+        const { data } = await supabaseClient.auth.getSession();
+        await handleAuthSession(data.session, false);
+        supabaseClient.auth.onAuthStateChange((_event, session) => {
+          handleAuthSession(session, true);
+        });
+        updateAuthUI();
+      } catch (error) {
+        console.warn("Supabase init failed", error);
+        updateAuthUI("Supabase 연결 실패");
+      }
+    }
+
+    async function loadSupabaseConfig() {
+      if (window.SUPABASE_CONFIG) return window.SUPABASE_CONFIG;
+      if (location.protocol === "file:") return null;
+      const response = await fetch("/api/config", { cache: "no-store" });
+      if (!response.ok) return null;
+      return response.json();
+    }
+
+    async function handleAuthSession(session, shouldLoadCloud) {
+      currentUser = session?.user || null;
+      updateAuthUI();
+      if (currentUser && shouldLoadCloud) await loadCloudSave();
+    }
+
+    async function signInWithPassword() {
+      if (!supabaseClient) {
+        toast("Supabase 설정 후 사용할 수 있습니다.");
+        return;
+      }
+      const email = $("authEmail").value.trim();
+      const password = $("authPassword").value;
+      if (!email || !password) {
+        toast("이메일과 비밀번호를 입력하세요.");
+        return;
+      }
+      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) toast(error.message);
+    }
+
+    async function signUpWithPassword() {
+      if (!supabaseClient) {
+        toast("Supabase 설정 후 사용할 수 있습니다.");
+        return;
+      }
+      const email = $("authEmail").value.trim();
+      const password = $("authPassword").value;
+      if (!email || !password) {
+        toast("이메일과 비밀번호를 입력하세요.");
+        return;
+      }
+      const { error } = await supabaseClient.auth.signUp({ email, password });
+      toast(error ? error.message : "회원가입 완료. 이메일 확인이 필요할 수 있습니다.");
+    }
+
+    async function signOut() {
+      if (!supabaseClient) return;
+      await supabaseClient.auth.signOut();
+      currentUser = null;
+      updateAuthUI();
+      toast("로그아웃되었습니다.");
+    }
+
+    function scheduleCloudSave() {
+      if (!supabaseClient || !currentUser) return;
+      clearTimeout(cloudSaveTimer);
+      cloudSaveTimer = setTimeout(saveCloudNow, 750);
+    }
+
+    async function saveCloudNow() {
+      if (!supabaseClient || !currentUser || cloudSaveBusy) return;
+      cloudSaveBusy = true;
+      updateAuthUI("클라우드 저장 중");
+      try {
+        const { error } = await supabaseClient
+          .from(CLOUD_SAVE_TABLE)
+          .upsert({
+            user_id: currentUser.id,
+            state,
+            updated_at: new Date().toISOString()
+          }, { onConflict: "user_id" });
+        updateAuthUI(error ? "클라우드 저장 실패" : "클라우드 저장 완료");
+      } catch {
+        updateAuthUI("클라우드 저장 실패");
+      } finally {
+        cloudSaveBusy = false;
+      }
+    }
+
+    async function loadCloudSave() {
+      if (!supabaseClient || !currentUser) return;
+      updateAuthUI("클라우드 저장 불러오는 중");
+      const { data, error } = await supabaseClient
+        .from(CLOUD_SAVE_TABLE)
+        .select("state, updated_at")
+        .eq("user_id", currentUser.id)
+        .maybeSingle();
+
+      if (error) {
+        updateAuthUI("클라우드 불러오기 실패");
+        return;
+      }
+
+      if (data?.state) {
+        state = hydrateState(data.state);
+        localStorage.setItem("minerBlacksmithSave", JSON.stringify(state));
+        render();
+        updateAuthUI("클라우드 저장 불러옴");
+      } else {
+        await saveCloudNow();
+      }
+    }
+
+    function updateAuthUI(message = "") {
+      const signedIn = !!currentUser;
+      $("authStatus").textContent = signedIn
+        ? `${currentUser.email || "플레이어"} 로그인 중`
+        : "로그인하면 진행 상황을 클라우드에 저장합니다.";
+      $("cloudStatus").textContent = message || (supabaseClient
+        ? signedIn ? "진행 상황이 자동으로 클라우드에 저장됩니다." : "이메일로 로그인하거나 회원가입하세요."
+        : "Vercel 환경변수와 Supabase DB 설정이 필요합니다.");
+      $("authFields").classList.toggle("hidden", signedIn);
+      $("loginBtn").classList.toggle("hidden", signedIn);
+      $("signupBtn").classList.toggle("hidden", signedIn);
+      $("logoutBtn").classList.toggle("hidden", !signedIn);
+      $("cloudSaveBtn").classList.toggle("hidden", !signedIn);
     }
 
     $("mineBtn").addEventListener("click", () => mine(1));
@@ -1584,6 +1800,11 @@
       $("logTab").classList.add("hidden");
     });
     $("craftBtn").addEventListener("click", () => craft());
+    $("bgmBtn").addEventListener("click", toggleBgm);
+    $("loginBtn").addEventListener("click", signInWithPassword);
+    $("signupBtn").addEventListener("click", signUpWithPassword);
+    $("logoutBtn").addEventListener("click", signOut);
+    $("cloudSaveBtn").addEventListener("click", saveCloudNow);
     $("saveBtn").addEventListener("click", () => save(true));
     $("resetBtn").addEventListener("click", reset);
 
@@ -1598,6 +1819,8 @@
     });
 
     render();
+    initSupabase();
   </script>
 </body>
 </html>
+
