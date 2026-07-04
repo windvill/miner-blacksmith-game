@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Miner & Blacksmith - 로그인</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #101417;
+      --panel: #171d22;
+      --panel-2: #20272d;
+      --text: #eff5f1;
+      --muted: #9eaaa5;
+      --line: #344047;
+      --green: #72d58b;
+      --gold: #f4c95d;
+      --red: #f27474;
+      --shadow: rgba(0, 0, 0, .45);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background:
+        radial-gradient(circle at 50% 20%, rgba(116, 173, 127, .18), transparent 38rem),
+        radial-gradient(circle at 80% 80%, rgba(244, 201, 93, .12), transparent 32rem),
+        linear-gradient(135deg, #0d1214 0%, #141414 46%, #1c1610 100%);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .login-container {
+      width: min(440px, 100%);
+      background: rgba(23, 29, 34, .95);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      box-shadow: 0 24px 60px var(--shadow);
+      padding: 32px 28px;
+      backdrop-filter: blur(10px);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .header-icon {
+      font-size: 3rem;
+      margin-bottom: 8px;
+      display: inline-block;
+      filter: drop-shadow(0 4px 12px rgba(244, 201, 93, .4));
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 2.1rem;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #eff5f1 30%, var(--gold));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: .92rem;
+      line-height: 1.4;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: .85rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    input {
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #11171b;
+      color: var(--text);
+      padding: 10px 14px;
+      font: inherit;
+      outline: none;
+      transition: border-color .15s ease, box-shadow .15s ease;
+    }
+
+    input:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(114, 213, 139, .15);
+    }
+
+    .btn-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+    .btn {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-2);
+      color: var(--text);
+      padding: 12px 16px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 14px var(--shadow);
+      transition: transform .14s ease, background .14s ease, border-color .14s ease;
+      min-height: 46px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn:hover { transform: translateY(-1px); border-color: #65737b; }
+    .btn:active { transform: translateY(0); }
+    .btn.primary { background: #2d6b48; border-color: #59a873; }
+    .btn.primary:hover { background: #357c54; }
+    .btn.guest { background: #242c33; border-color: #3f4e5a; color: #b8c8d4; }
+    .btn.guest:hover { background: #2f3942; color: #fff; }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      text-align: center;
+      margin: 20px 0;
+      color: var(--muted);
+      font-size: .8rem;
+    }
+
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .divider span {
+      padding: 0 10px;
+    }
+
+    .status-msg {
+      margin-top: 14px;
+      font-size: .85rem;
+      text-align: center;
+      min-height: 20px;
+      color: var(--gold);
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 20px;
+      transform: translateX(-50%) translateY(20px);
+      opacity: 0;
+      pointer-events: none;
+      background: #edf8f1;
+      color: #101514;
+      padding: 10px 18px;
+      border-radius: 8px;
+      box-shadow: 0 12px 34px rgba(0,0,0,.35);
+      transition: opacity .25s ease, transform .25s ease;
+      font-weight: 700;
+      z-index: 10;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <main class="login-container">
+    <div class="header">
+      <div class="header-icon">⛏️🔥</div>
+      <h1>Miner & Blacksmith</h1>
+      <div class="subtitle">던전을 탐험하며 희귀 광석을 캐고,<br>제련하여 전설의 장비를 제작해보세요.</div>
+    </div>
+
+    <form id="loginForm" onsubmit="return false;">
+      <div class="form-group">
+        <label for="authEmail">이메일 계정</label>
+        <input id="authEmail" type="email" autocomplete="email" placeholder="name@example.com" required>
+      </div>
+
+      <div class="form-group">
+        <label for="authPassword">비밀번호</label>
+        <input id="authPassword" type="password" autocomplete="current-password" placeholder="••••••••" required>
+      </div>
+
+      <div class="btn-stack">
+        <button class="btn primary" id="loginBtn">로그인하고 게임 시작</button>
+        <button class="btn" id="signupBtn">회원가입</button>
+      </div>
+    </form>
+
+    <div class="divider"><span>또는</span></div>
+
+    <button class="btn guest" id="guestBtn">🎮 게스트 모드로 바로 시작 (로컬 저장)</button>
+
+    <div class="status-msg" id="statusMsg"></div>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    let supabaseClient = null;
+
+    function toast(text) {
+      $("toast").textContent = text;
+      $("toast").classList.add("show");
+      clearTimeout(toast.timer);
+      toast.timer = setTimeout(() => $("toast").classList.remove("show"), 2200);
+    }
+
+    function setStatus(msg) {
+      $("statusMsg").textContent = msg;
+    }
+
+    async function loadSupabaseConfig() {
+      if (window.SUPABASE_CONFIG) return window.SUPABASE_CONFIG;
+      if (location.protocol === "file:") return null;
+      try {
+        const response = await fetch("/api/config", { cache: "no-store" });
+        if (!response.ok) return null;
+        return response.json();
+      } catch {
+        return null;
+      }
+    }
+
+    async function initSupabase() {
+      setStatus("서버 연결 확인 중...");
+      try {
+        const config = await loadSupabaseConfig();
+        if (!config?.supabaseUrl || !config?.supabaseAnonKey) {
+          setStatus("클라우드 설정 없음 (게스트 모드로 플레이 가능)");
+          return;
+        }
+
+        const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
+        supabaseClient = createClient(config.supabaseUrl, config.supabaseAnonKey, {
+          auth: {
+            autoRefreshToken: true,
+            persistSession: true,
+            detectSessionInUrl: true
+          }
+        });
+
+        const { data } = await supabaseClient.auth.getSession();
+        if (data?.session?.user) {
+          setStatus("로그인 세션 확인됨. 게임으로 이동합니다...");
+          setTimeout(() => {
+            window.location.href = "game.html";
+          }, 600);
+        } else {
+          setStatus("");
+        }
+      } catch (error) {
+        console.warn("Supabase init failed", error);
+        setStatus("클라우드 연결 미지원 (게스트 모드 추천)");
+      }
+    }
+
+    async function signInWithPassword() {
+      if (!supabaseClient) {
+        toast("클라우드 설정이 없어 게스트 모드로 시작합니다.");
+        startGuest();
+        return;
+      }
+      const email = $("authEmail").value.trim();
+      const password = $("authPassword").value;
+      if (!email || !password) {
+        toast("이메일과 비밀번호를 입력해주세요.");
+        return;
+      }
+
+      setStatus("로그인 중...");
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) {
+        toast(error.message);
+        setStatus("로그인 실패");
+      } else {
+        toast("로그인 성공!");
+        setStatus("게임 페이지로 이동합니다...");
+        setTimeout(() => {
+          window.location.href = "game.html";
+        }, 500);
+      }
+    }
+
+    async function signUpWithPassword() {
+      if (!supabaseClient) {
+        toast("클라우드 설정이 없습니다.");
+        return;
+      }
+      const email = $("authEmail").value.trim();
+      const password = $("authPassword").value;
+      if (!email || !password) {
+        toast("이메일과 비밀번호를 입력해주세요.");
+        return;
+      }
+
+      setStatus("회원가입 진행 중...");
+      const { data, error } = await supabaseClient.auth.signUp({ email, password });
+      if (error) {
+        toast(error.message);
+        setStatus("회원가입 실패");
+      } else {
+        toast("회원가입 완료! (이메일 확인이 필요할 수 있습니다)");
+        setStatus("회원가입 완료.");
+      }
+    }
+
+    function startGuest() {
+      localStorage.setItem("minerBlacksmithGuest", "true");
+      toast("게스트 모드로 시작합니다!");
+      setTimeout(() => {
+        window.location.href = "game.html";
+      }, 300);
+    }
+
+    $("loginBtn").addEventListener("click", signInWithPassword);
+    $("signupBtn").addEventListener("click", signUpWithPassword);
+    $("guestBtn").addEventListener("click", startGuest);
+
+    initSupabase();
+  </script>
+</body>
+</html>
