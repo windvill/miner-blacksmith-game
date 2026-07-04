@@ -2,8 +2,8 @@
 
 이 디렉터리는 Miner & Blacksmith 프로젝트의 소스 분석, 사용법, 개발 방향 및 구현 계획 문서를 포함합니다.
 
-* 📄 [개발 가이드 및 소스 분석 문서 (DEVELOPMENT_GUIDE.md)](file:///Users/flowerhead/miner-blacksmith-game/doc/DEVELOPMENT_GUIDE.md)
-* 📋 [로그인/게임 페이지 분리 구현 계획서 (IMPLEMENTATION_PLAN.md)](file:///Users/flowerhead/miner-blacksmith-game/doc/IMPLEMENTATION_PLAN.md)
+* 📄 [개발 가이드 및 소스 분석 문서 (DEVELOPMENT_GUIDE.md)](DEVELOPMENT_GUIDE.md)
+* 📋 [로그인/게임 페이지 분리 구현 계획서 (IMPLEMENTATION_PLAN.md)](IMPLEMENTATION_PLAN.md)
 
 ---
 

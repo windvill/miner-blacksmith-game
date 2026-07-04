@@ -76,5 +76,5 @@ npx serve -l 8080
 
 ## 📚 상세 문서 (Documentation Links)
 
-* 📄 [개발 가이드 및 소스 분석 문서 (DEVELOPMENT_GUIDE.md)](file:///Users/flowerhead/miner-blacksmith-game/doc/DEVELOPMENT_GUIDE.md)
-* 📋 [로그인/게임 페이지 분리 구현 계획서 (IMPLEMENTATION_PLAN.md)](file:///Users/flowerhead/miner-blacksmith-game/doc/IMPLEMENTATION_PLAN.md)
+* 📄 [개발 가이드 및 소스 분석 문서 (DEVELOPMENT_GUIDE.md)](doc/DEVELOPMENT_GUIDE.md)
+* 📋 [로그인/게임 페이지 분리 구현 계획서 (IMPLEMENTATION_PLAN.md)](doc/IMPLEMENTATION_PLAN.md)
