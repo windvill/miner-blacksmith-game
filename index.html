@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Miner & Blacksmith</title>
+  <link rel="stylesheet" href="/src/styles/main.css">
   <style>
     body {
       margin: 0;
@@ -13,7 +14,6 @@
       justify-content: center;
       background: #101417;
       color: #eff5f1;
-      font-family: system-ui, sans-serif;
     }
     .loading-box {
       text-align: center;
@@ -38,36 +38,6 @@
     <div>Miner & Blacksmith 세션 확인 중...</div>
   </div>
 
-  <script>
-    async function route() {
-      const isGuest = localStorage.getItem("minerBlacksmithGuest");
-      
-      try {
-        const response = await fetch("/api/config", { cache: "no-store" });
-        if (response.ok) {
-          const config = await response.json();
-          if (config?.supabaseUrl && config?.supabaseAnonKey) {
-            const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
-            const supabase = createClient(config.supabaseUrl, config.supabaseAnonKey);
-            const { data } = await supabase.auth.getSession();
-            if (data?.session?.user) {
-              window.location.replace("game.html");
-              return;
-            }
-          }
-        }
-      } catch (e) {
-        console.warn("Session check failed", e);
-      }
-
-      if (isGuest === "true") {
-        window.location.replace("game.html");
-      } else {
-        window.location.replace("login.html");
-      }
-    }
-
-    route();
-  </script>
+  <script type="module" src="/src/router.ts"></script>
 </body>
 </html>

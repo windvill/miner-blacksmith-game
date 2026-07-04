@@ -127,11 +127,12 @@ miner-blacksmith-game/
 
 ### Phase 1: 아키텍처 및 코드 모듈화 (Short-term)
 * [x] **페이지 구조 분리 (완료)**: `login.html`, `game.html`, `index.html` 스마트 라우팅 분리.
-* [ ] **JS/CSS 파일 분리**:
-  * `css/style.css`: UI/컴포넌트 및 애니메이션 스타일 이관.
-  * `src/core/`: `MiningEngine.js`, `ForgeEngine.js`, `DungeonEngine.js` 게임 로직 분리.
-  * `src/audio/`: `AudioEngine.js` 오디오 모듈 분리.
-* [ ] **Vite + TypeScript 도입**: 타입 안정성 및 모듈 번들링 최적화.
+* [x] **JS/CSS 파일 분리 (완료)**:
+  * `src/styles/main.css`: UI/컴포넌트 및 애니메이션 스타일 이관.
+  * `src/core/`: `MiningEngine.ts`, `ForgeEngine.ts`, `DungeonEngine.ts` 게임 로직 분리.
+  * `src/audio/`: `AudioEngine.ts` 오디오 모듈 분리.
+  * `src/services/`: `SupabaseService.ts` 데이터 연동 모듈 분리.
+* [x] **Vite + TypeScript 도입 (완료)**: 타입 안정성 및 멀티페이지 번들링 최적화.
 
 ### Phase 2: 게임 콘텐츠 및 시스템 확장 (Mid-term)
 * [ ] **던전 몬스터 & 전투 시스템 (Combat System)**:

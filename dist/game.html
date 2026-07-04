@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Miner & Blacksmith - 게임 플레이</title>
+  <script type="module" crossorigin src="/assets/game-Bp2wGeIt.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/SupabaseService-1D4bT8IO.js">
+  <link rel="stylesheet" crossorigin href="/assets/SupabaseService-Dqj4kSsp.css">
+</head>
+<body>
+  <main class="app">
+    <section class="topbar">
+      <div>
+        <h1>Miner & Blacksmith</h1>
+        <div class="subtitle">던전을 탐험하며 희귀 금속을 캐고, 제련하고, 장비를 만들어 더 깊은 광산으로 내려가세요.</div>
+      </div>
+      <div class="controls">
+        <button class="btn" id="bgmBtn" title="긴장감 있는 배경음 켜기">BGM 꺼짐</button>
+        <button class="btn" id="saveBtn" title="현재 진행 저장">저장</button>
+        <button class="btn" id="resetBtn" title="처음부터 다시 시작">초기화</button>
+      </div>
+    </section>
+
+    <!-- 슬림형 프로필 & 플레이어 바 -->
+    <section class="player-bar">
+      <div class="player-info">
+        <span class="user-badge" id="userBadge">👤 접속 상태 파악 중</span>
+        <span class="hint" id="syncStatus">동기화 대기</span>
+      </div>
+      <div class="player-actions">
+        <button class="btn primary" id="cloudSaveBtn">클라우드 저장</button>
+        <button class="btn" id="logoutBtn">시작 화면 / 로그아웃</button>
+      </div>
+    </section>
+
+    <section class="layout">
+      <article class="panel">
+        <header>
+          <h2>채광</h2>
+          <span class="hint" id="mineChance">특수금속 예상 계산 중</span>
+        </header>
+        <div class="body">
+          <div class="mine-scene">
+            <div class="shaft"></div>
+            <div class="ore-face" aria-hidden="true"></div>
+            <svg class="miner" id="minerSvg" viewBox="0 0 168 138" aria-hidden="true">
+              <ellipse cx="59" cy="125" rx="41" ry="9" fill="rgba(0,0,0,.35)"/>
+              <g class="prep-pose">
+                <g class="miner-body">
+                  <path d="M39 35 L61 22 L84 35 L80 48 L43 48 Z" fill="#d7aa47"/>
+                  <path d="M43 49 C46 39 76 39 80 50 L82 86 C78 99 47 99 42 87 Z" fill="#4f8d62"/>
+                  <circle cx="62" cy="37" r="13" fill="#c59061"/>
+                  <path d="M49 33 C54 20 79 22 82 35 C71 31 59 30 49 33 Z" fill="#e0b74f"/>
+                  <path d="M48 89 L34 123" stroke="#59636b" stroke-width="11" stroke-linecap="round" fill="none"/>
+                  <path d="M74 89 L91 123" stroke="#59636b" stroke-width="11" stroke-linecap="round" fill="none"/>
+                </g>
+                <path d="M45 56 C59 49 80 47 96 48" stroke="#b98258" stroke-width="10" stroke-linecap="round" fill="none"/>
+                <path d="M78 56 C88 50 98 51 103 58" stroke="#c59061" stroke-width="10" stroke-linecap="round" fill="none"/>
+                <g class="pickaxe-tool">
+                  <path d="M101 58 L101 1" stroke="#5f4634" stroke-width="13" stroke-linecap="round" fill="none"/>
+                  <path d="M101 57 L101 3" stroke="#8a6b4b" stroke-width="9.5" stroke-linecap="round" fill="none" class="pickaxe-handle"/>
+                  <g class="pickaxe-head pickaxe-metal">
+                    <path d="M86 1 C72 -6 56 -3 47 6 C63 5 78 11 94 22 Z" fill="#15191b"/>
+                    <path d="M108 1 C123 -7 140 -4 150 5 C132 5 119 11 105 22 Z" fill="#1f2428"/>
+                    <ellipse cx="101" cy="14" rx="10" ry="13" fill="#2b2b29"/>
+                  </g>
+                </g>
+                <circle cx="96" cy="48" r="5.8" fill="#c59061"/>
+                <circle cx="103" cy="58" r="5.8" fill="#c59061"/>
+              </g>
+              <g class="strike-pose">
+                <g class="miner-body">
+                  <path d="M48 38 L70 28 L89 43 L80 55 L51 52 Z" fill="#d7aa47"/>
+                  <path d="M50 54 C61 45 86 51 94 66 L82 90 C70 98 45 84 40 72 Z" fill="#4f8d62"/>
+                  <circle cx="79" cy="41" r="12" fill="#c59061"/>
+                  <path d="M67 36 C74 24 95 27 98 40 C88 37 78 35 67 36 Z" fill="#e0b74f"/>
+                  <path d="M47 82 L31 101 L17 123" stroke="#59636b" stroke-width="11" stroke-linecap="round" fill="none"/>
+                  <path d="M78 88 L99 103 L116 122" stroke="#59636b" stroke-width="11" stroke-linecap="round" fill="none"/>
+                </g>
+                <path d="M60 62 C76 66 91 72 103 80" stroke="#b98258" stroke-width="10" stroke-linecap="round" fill="none"/>
+                <path d="M83 65 C94 69 104 75 112 86" stroke="#c59061" stroke-width="10" stroke-linecap="round" fill="none"/>
+                <path class="swing-arc" d="M86 20 C121 9 158 35 164 79" stroke="#fff7bf" stroke-width="5" stroke-linecap="round" fill="none" opacity="0" stroke-dasharray="96" stroke-dashoffset="96"/>
+                <g class="pickaxe-tool">
+                  <path d="M101 79 L145 120" stroke="#5f4634" stroke-width="13" stroke-linecap="round" fill="none"/>
+                  <path d="M103 79 L147 121" stroke="#8a6b4b" stroke-width="9.5" stroke-linecap="round" fill="none" class="pickaxe-handle"/>
+                  <g class="pickaxe-head pickaxe-metal">
+                    <path d="M128 124 C138 111 154 101 166 98 C157 111 151 120 146 133 Z" fill="#15191b"/>
+                    <path d="M146 133 C129 131 111 126 94 118 C111 115 130 116 146 123 Z" fill="#1f2428"/>
+                    <ellipse cx="146" cy="121" rx="9" ry="11" transform="rotate(42 146 121)" fill="#2b2b29"/>
+                  </g>
+                </g>
+                <circle cx="103" cy="80" r="5.8" fill="#c59061"/>
+                <circle cx="112" cy="86" r="5.8" fill="#c59061"/>
+              </g>
+            </svg>
+            <div class="spark" id="spark"></div>
+            <div class="impact-ring" id="impactRing" aria-hidden="true"></div>
+            <div class="debris" id="debris" aria-hidden="true"><span class="chip"></span><span class="chip"></span><span class="chip"></span><span class="chip"></span></div>
+          </div>
+
+          <div class="dungeon-card">
+            <div class="dungeon-head"><div><div class="label">던전 탐험</div><div class="dungeon-name" id="roomName">광산 입구</div></div><div class="value" id="dungeonDepth">1층</div></div>
+            <div class="dungeon-grid"><div class="mini-map" id="miniMap" aria-hidden="true"></div><div class="dungeon-meta"><div id="roomDesc">따뜻한 공기와 이어진 안전한 갱도입니다.</div><div>위험도 <span id="dangerLevel">0</span> · 광맥 <span id="veinText">2/2</span></div><div class="vein-meter"><div class="vein-fill" id="veinFill"></div></div></div></div>
+            <div class="travel-grid"><button class="btn" id="northBtn">북쪽</button><button class="btn" id="deeperBtn">깊은 길</button><button class="btn" id="eastBtn">동쪽</button><button class="btn" id="westBtn">서쪽</button><button class="btn" id="campBtn">대장간 귀환</button><button class="btn" id="southBtn">남쪽</button></div>
+          </div>
+
+          <div class="stats"><div class="stat"><div class="label">광부 레벨</div><div class="value" id="minerLevel">1</div><div class="bar"><div class="fill" id="minerXp"></div></div></div><div class="stat"><div class="label">채광력</div><div class="value" id="power">1</div><div class="hint">곡괭이와 장비로 증가</div></div><div class="stat"><div class="label">골드</div><div class="value gold" id="gold">0</div><div class="hint">광석 판매와 제작 보상</div></div><div class="stat"><div class="label">깊이</div><div class="value" id="depth">1층</div><div class="hint">레벨이 오르면 자동 상승</div></div></div>
+          <div class="action-grid"><button class="btn primary" id="mineBtn">⛏ 채광</button><button class="btn" id="bulkMineBtn">⛏⛏ 10회 채광</button><button class="btn" id="sellBtn">광석 판매</button><button class="btn" id="shopOpenBtn">상점 열기</button></div>
+        </div>
+      </article>
+
+      <article class="panel"><header><h2>대장간</h2><span class="hint" id="forgeChance">기본 성공률 계산 중</span></header><div class="body"><div class="forge"><div class="flame"></div><svg class="forge-hammer" id="forgeHammer" viewBox="0 0 118 102" aria-hidden="true"><path d="M28 16 L86 76" stroke="#5f4634" stroke-width="16" stroke-linecap="round"/><path d="M30 15 L88 74" stroke="#9a7149" stroke-width="10" stroke-linecap="round"/><path d="M73 64 L98 56 L111 70 L86 83 Z" fill="#9aa4a9"/><path d="M97 56 L116 62 L118 75 L108 72 Z" fill="#c1c9cd"/><path d="M75 65 L88 83 L73 90 L60 72 Z" fill="#59636b"/></svg><div class="anvil"></div><div class="forge-ring" aria-hidden="true"></div><div class="forge-spark" aria-hidden="true"><span></span><span></span><span></span><span></span></div></div><div class="stats"><div class="stat"><div class="label">대장장이 레벨</div><div class="value" id="smithLevel">1</div><div class="bar"><div class="fill" id="smithXp"></div></div></div><div class="stat"><div class="label">숙련도</div><div class="value" id="mastery">0</div><div class="hint">실패해도 조금 오릅니다</div></div></div><div class="select-line"><select id="recipeSelect" aria-label="제작 선택"></select><button class="btn hot" id="craftBtn">제작</button></div><div id="recipeList"></div></div></article>
+
+      <article class="panel"><div class="tabs"><button class="tab active" data-tab="inventory">인벤토리</button><button class="tab" data-tab="shop">상점</button><button class="tab" data-tab="log">기록</button></div><div class="body" id="inventoryTab"><div id="inventory"></div></div><div class="body hidden" id="shopTab"><div id="shopList"></div></div><div class="body hidden" id="logTab"><div class="log" id="log"></div></div></article>
+    </section>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+</body>
+</html>

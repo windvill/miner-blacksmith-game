@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Miner & Blacksmith - 로그인</title>
+  <script type="module" crossorigin src="/assets/login-p_HefGZg.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/SupabaseService-1D4bT8IO.js">
+  <link rel="stylesheet" crossorigin href="/assets/SupabaseService-Dqj4kSsp.css">
+</head>
+<body class="login-body">
+
+  <main class="login-container">
+    <div class="login-header">
+      <div class="login-header-icon">⛏️🔥</div>
+      <h1 class="login-title">Miner & Blacksmith</h1>
+      <div class="subtitle">던전을 탐험하며 희귀 광석을 캐고,<br>제련하여 전설의 장비를 제작해보세요.</div>
+    </div>
+
+    <form id="loginForm" onsubmit="return false;">
+      <div class="form-group">
+        <label for="authEmail">이메일 계정</label>
+        <input id="authEmail" type="email" autocomplete="email" placeholder="name@example.com" required>
+      </div>
+
+      <div class="form-group">
+        <label for="authPassword">비밀번호</label>
+        <input id="authPassword" type="password" autocomplete="current-password" placeholder="••••••••" required>
+      </div>
+
+      <div class="btn-stack">
+        <button class="btn primary" id="loginBtn">로그인하고 게임 시작</button>
+        <button class="btn" id="signupBtn">회원가입</button>
+      </div>
+    </form>
+
+    <div class="divider"><span>또는</span></div>
+
+    <button class="btn guest" id="guestBtn">🎮 게스트 모드로 바로 시작 (로컬 저장)</button>
+
+    <div class="status-msg" id="statusMsg"></div>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+</body>
+</html>
