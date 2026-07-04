@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Miner & Blacksmith</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #101417;
+      color: #eff5f1;
+    }
+    .loading-box {
+      text-align: center;
+    }
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid #344047;
+      border-top-color: #72d58b;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+  <script type="module" crossorigin src="/assets/main-DeGsCOvE.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/SupabaseService-1D4bT8IO.js">
+  <link rel="stylesheet" crossorigin href="/assets/SupabaseService-Dqj4kSsp.css">
+</head>
+<body>
+  <div class="loading-box">
+    <div class="spinner"></div>
+    <div>Miner & Blacksmith 세션 확인 중...</div>
+  </div>
+
+</body>
+</html>
